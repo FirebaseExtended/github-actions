@@ -1,0 +1,37 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Release Diffing
+author: Firebase EngProd
+description: |-
+  Submits release information to the Firebase SDK metric service, and
+  optionally calulates diffs of SDK health metrics against previous releases.
+
+inputs:
+  repo:
+    description: The repository where the action is invoked
+    required: true
+  ref:
+    description: The tag ref name of the release commit
+    required: true
+  commit:
+    description: The commit sha1 of the release commit
+    required: true
+  releaseId:
+    description: The GitHub release object ID
+    required: false
+
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

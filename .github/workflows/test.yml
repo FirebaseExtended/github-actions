@@ -9,7 +9,7 @@ jobs:
     runs-on: macOS-latest
     steps:
       - name: ftl-tests
-        uses: google-github-actions/ftl-test-lab@gl/firebase-test-lab
+        uses: FirebaseExtended/github-actions/ftl-test-lab@gl/firebase-test-lab
       - name: test
         run: |
           echo "Hello world"

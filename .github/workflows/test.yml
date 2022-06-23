@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     name: test
-    runs-on: macOS
+    runs-on: macOS-latest
     steps:
       - name: ftl-tests
         uses: google-github-actions/ftl-test-lab@gl/firebase-test-lab

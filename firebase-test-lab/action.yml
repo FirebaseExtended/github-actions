@@ -19,7 +19,9 @@ outputs:
 runs:
   using: 'composite'
   steps:
-
+  - uses: actions/setup-python@v4
+    with:
+      python-version: '3.7'
   - name: Set up Google Cloud SDK
     uses: google-github-actions/setup-gcloud@v0
   - name: Install dependencies

@@ -31,8 +31,6 @@ from absl import logging
 GCLOUD = shutil.which("gcloud")
 GSUTIL = shutil.which("gsutil")
 
-
-
 # This does not include the prefix "gs://<project_id>" because the gcloud
 # command for using Firebase Test Lab requires the results dir to be a relative
 # path within the bucket, not the full gs object URI.
@@ -81,27 +79,3 @@ def authorize_gcs(key_file, project_id):
   subprocess.run(
       args=[GCLOUD, "config", "set", "project", project_id],
       check=True)
-
-
-# This is intended to be logged when a tool stores artifacts on GCS.
-def get_gsutil_tips():
-  """Returns a human readable string with tips on accessing a GCS bucket."""
-  return "\n".join((
-      "GCS Advice: Install the Google Cloud SDK to access the gsutil tool.",
-      "Use 'gsutil ls <gs_uri>' to list contents of a directory on GCS.",
-      "Use 'gsutil cp <gs_uri> <local_path>' to copy an artifact.",
-      "Use 'gsutil -m cp -r <gs_uri> <local_path>' to copy a directory."
-  ))
-
-
-def _verify_gcloud_sdk_command_line_tools():
-  """Verifies the presence of the gCloud SDK's command line tools."""
-  logging.info("Looking for gcloud and gsutil tools...")
-  if not GCLOUD:
-    logging.error("gcloud not on path")
-  if not GSUTIL:
-    logging.error("gsutil not on path")
-  if not GCLOUD or not GSUTIL:
-    raise RuntimeError("Could not find required gCloud SDK tool(s)")
-  subprocess.run([GCLOUD, "version"], check=True)
-  subprocess.run([GSUTIL, "version"], check=True)

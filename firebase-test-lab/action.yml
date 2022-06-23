@@ -25,6 +25,7 @@ runs:
     run: |
       [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
       [[ "${{ inputs.key_file }}" ]] || { echo "key_file is empty" ; exit 1; }
+    shell: bash
   - uses: actions/setup-python@v4
     with:
       python-version: '3.7'

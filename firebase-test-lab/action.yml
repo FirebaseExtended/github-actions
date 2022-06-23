@@ -1,7 +1,7 @@
 name: 'Generate NOTICES'
 description: 'Create a test on Firebase Test Lab'
 inputs:
-  testapp-dir:
+  testapp_dir:
     description: 'Testapps under this  dir that will be uploaded.'
     required: true
   key_file:
@@ -19,6 +19,12 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    # `required` does not work as expected so a validation is needed.
+    # `required` issue:https://github.com/actions/runner/issues/1070
+  - name: Validate inputs
+    run: |
+      [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
+      [[ "${{ inputs.key_file }}" ]] || { echo "key_file is empty" ; exit 1; }
   - uses: actions/setup-python@v4
     with:
       python-version: '3.7'
@@ -33,7 +39,7 @@ runs:
     run: |
       cd "${{ github.action_path }}"
       python triger_ftl_tests.py \
-      --testapp_dir "${{ inputs.testapp-dir }}" \
+      --testapp_dir "${{ inputs.testapp_dir }}" \
       --key_file "${{ inputs.key_file }}" \
       --ios_model "${{ inputs.device }}" \
       --ios_version "${{ inputs.device_version }}"

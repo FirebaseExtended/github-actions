@@ -35,6 +35,6 @@ runs:
       python triger_ftl_tests.py \
       --testapp_dir "${{ inputs.testapp-dir }}" \
       --key_file "${{ inputs.key_file }}" \
-      --ios-device "${{ inputs.device }}" \
-      --ios-version "${{ inputs.device_version }}"
+      --ios_model "${{ inputs.device }}" \
+      --ios_version "${{ inputs.device_version }}"
     shell: bash

@@ -1,0 +1,13 @@
+name: TestWorkflows
+
+on:
+  push
+
+job:
+  test:
+    name:test
+  runs-on: macOS
+  steps:
+    - name: ftl-tests
+      uses: google-github-actions/ftl-test-lab
+     

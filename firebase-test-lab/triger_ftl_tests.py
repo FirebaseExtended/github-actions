@@ -67,6 +67,7 @@ def main(argv):
     for file_name in file_names:
       full_path = os.path.join(file_dir, file_name)
       if FLAGS.test_type==_XCTEST and file_name.endswith(".zip") :
+        print("XCTest bundle, " + full_path + " is detected.")
         has_ios = True
         testapps.append((ios_device, _IOS, full_path))
 

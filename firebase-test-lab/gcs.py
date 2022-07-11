@@ -31,8 +31,6 @@ from absl import logging
 GCLOUD = shutil.which("gcloud")
 GSUTIL = shutil.which("gsutil")
 
-
-
 # This does not include the prefix "gs://<project_id>" because the gcloud
 # command for using Firebase Test Lab requires the results dir to be a relative
 # path within the bucket, not the full gs object URI.
@@ -52,23 +50,6 @@ def get_unique_gcs_id():
   suffix = "".join(random.choice(string.ascii_letters) for _ in range(4))
   return "%s_%s" % (timestamp, suffix)
 
-
-def relative_path_to_gs_uri(path, project_id):
-  """Converts a relative GCS path to a GS URI understood by gsutil.
-  This will prepend the gs prefix and project id to the path, i.e.
-  path -> gs://<project_id>/results_dir
-  Returns path unmodified if it already starts with the gs prefix.
-  Args:
-    path (str): A relative path.
-  Returns:
-    (str): The full GS URI for the given relative path.
-  """
-  if path.startswith("gs://"):
-    return path
-  else:
-    return "gs://%s/%s" % (project_id, path)
-
-
 def authorize_gcs(key_file, project_id):
   """Activates the service account on GCS and specifies the project to use."""
   _verify_gcloud_sdk_command_line_tools()
@@ -81,18 +62,6 @@ def authorize_gcs(key_file, project_id):
   subprocess.run(
       args=[GCLOUD, "config", "set", "project", project_id],
       check=True)
-
-
-# This is intended to be logged when a tool stores artifacts on GCS.
-def get_gsutil_tips():
-  """Returns a human readable string with tips on accessing a GCS bucket."""
-  return "\n".join((
-      "GCS Advice: Install the Google Cloud SDK to access the gsutil tool.",
-      "Use 'gsutil ls <gs_uri>' to list contents of a directory on GCS.",
-      "Use 'gsutil cp <gs_uri> <local_path>' to copy an artifact.",
-      "Use 'gsutil -m cp -r <gs_uri> <local_path>' to copy a directory."
-  ))
-
 
 def _verify_gcloud_sdk_command_line_tools():
   """Verifies the presence of the gCloud SDK's command line tools."""

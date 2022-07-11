@@ -1,4 +1,4 @@
-name: 'Generate NOTICES'
+name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
   testapp_dir:

@@ -121,8 +121,8 @@ def _run_test_on_ftl(tests, tested_tests, retry=3):
     tested_tests.append(test)
   for thread in threads:
     thread.join()
-
   return tested_tests
+
 def _fix_path(path):
   """Expands ~, normalizes slashes, and converts relative paths to absolute."""
   return os.path.abspath(os.path.expanduser(path))
@@ -218,6 +218,6 @@ class Device(object):
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("testapp_dir")
-  flags.mark_flag_as_required("key_file")
+  flags.mark_flag_as_required("project_id")
   app.run(main)
 

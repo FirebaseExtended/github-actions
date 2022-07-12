@@ -24,7 +24,6 @@ from absl import flags
 from absl import logging
 import attr
 
-PROJECT_ID_KEY="project_id"
 _IOS = "ios"
 _ANDROID = "android"
 _XCTEST = "xctest"

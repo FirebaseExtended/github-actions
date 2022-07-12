@@ -27,6 +27,5 @@ runs:
     shell: bash
     run: |
       cd "${{ github.action_path }}"
-      python triger_ftl_tests.py \
-      --project_id "${{ inputs.project_id }}" \ 
-      --testapp_dir "${{ inputs.testapp_dir }}"
+      python triger_ftl_tests.py --project_id "${{ inputs.project_id }}" \ 
+        --testapp_dir "${{ inputs.testapp_dir }}"

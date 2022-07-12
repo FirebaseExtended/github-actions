@@ -75,13 +75,11 @@ def main(argv):
       full_path = os.path.join(file_dir, file_name)
       if FLAGS.test_type==_XCTEST and file_name.endswith(".zip") :
         print("XCTest bundle, " + full_path + " is detected.")
-        has_ios = True
         testapps.append((ios_device, _IOS, full_path))
       elif FLAGS.test_type == _GAMELOOPTEST:
         if file_name.endswith(".apk"):
           testapps.append((android_device, _ANDROID, full_path))
         elif file_name.endswith(".ipa"):
-          has_ios = True
           testapps.append((ios_device, _IOS, full_path))
 
 
@@ -92,7 +90,6 @@ def main(argv):
   logging.info("Testapps found: %s", "\n".join(path for _, _, path in testapps))
 
   gcs_base_dir = gcs.get_unique_gcs_id()
-  logging.info("Store results in %s", gcs.relative_path_to_gs_uri(gcs_base_dir, project_id))
 
   tests = []
   for device, platform, path in testapps:

@@ -38,7 +38,7 @@ flags.DEFINE_string(
 flags.DEFINE_string(
     "project_id", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_enum(
-    "test_type", 'xctest', [_XCTEST, _GAMELOOPTEST], "Test type that Firebase Test Lab will run.")
+    "test_type", _GAMELOOPTEST, [_XCTEST, _GAMELOOPTEST], "Test type that Firebase Test Lab will run.")
 flags.DEFINE_string(
     "android_model", None,
     "Model id for desired device. See module docstring for details on how"

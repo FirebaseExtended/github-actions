@@ -26,9 +26,10 @@ import attr
 
 PROJECT_ID_KEY="project_id"
 _IOS = "ios"
+_ANDROID = "android"
 _XCTEST = "xctest"
+_GAMELOOPTEST = "game-loop"
 #TODO: create FTL trigger for android tests.
-_Android = "android"
 
 FLAGS = flags.FLAGS
 
@@ -36,9 +37,17 @@ flags.DEFINE_string(
     "testapp_dir", None,
     "Testapps (apks and ipas) in this directory will be tested.")
 flags.DEFINE_string(
-    "key_file", None, "Path to key file authorizing use of the GCS bucket.")
+    "project_id", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_enum(
-    "test_type", 'xctest', ['xctest', 'game-loop'], "Test type that Firebase Test Lab will run.")
+    "test_type", 'xctest', [_XCTEST, _GAMELOOPTEST], "Test type that Firebase Test Lab will run.")
+flags.DEFINE_string(
+    "android_model", None,
+    "Model id for desired device. See module docstring for details on how"
+    " to get this id. If none, will use FTL's default.")
+flags.DEFINE_string(
+    "android_version", None,
+    "API level for desired device. See module docstring for details on how"
+    " to find available values. If none, will use FTL's default.")
 flags.DEFINE_string(
     "ios_model", None,
     "Model id for desired device. See module docstring for details on how"
@@ -52,16 +61,15 @@ def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
+  project_id = FLAGS.project_id
   testapp_dir = _fix_path(FLAGS.testapp_dir)
-  key_file_path = _fix_path(FLAGS.key_file)
+  android_model = FLAGS.android_model
+  android_version = FLAGS.android_version
   ios_model = FLAGS.ios_model
   ios_version = FLAGS.ios_version
-  project_id = json.load(open(key_file_path))[PROJECT_ID_KEY]
-
-  if not os.path.exists(key_file_path):
-    raise ValueError("Key file path does not exist: %s" % key_file_path)
 
   ios_device = Device(model=ios_model, version=ios_version)
+  android_device = Device(model=android_model, version=android_version)
   testapps=[]
   for file_dir, _, file_names in os.walk(testapp_dir):
     for file_name in file_names:
@@ -70,14 +78,19 @@ def main(argv):
         print("XCTest bundle, " + full_path + " is detected.")
         has_ios = True
         testapps.append((ios_device, _IOS, full_path))
+      elif FLAGS.test_type == _GAMELOOPTEST:
+        if file_name.endswith(".apk"):
+          testapps.append((android_device, _ANDROID, full_path))
+        elif file_name.endswith(".ipa"):
+          has_ios = True
+          testapps.append((ios_device, _IOS, full_path))
+
 
   if not testapps:
     logging.error("No testapps found.")
     return 1
 
   logging.info("Testapps found: %s", "\n".join(path for _, _, path in testapps))
-
-  gcs.authorize_gcs(key_file_path, project_id)
 
   gcs_base_dir = gcs.get_unique_gcs_id()
   logging.info("Store results in %s", gcs.relative_path_to_gs_uri(gcs_base_dir, project_id))
@@ -162,15 +175,21 @@ class Test(object):
         "--results-dir", self.results_dir,
         "--timeout", "600s"
     ]
-    if self.platform == _IOS:
+
+    if FLAGS.test_type==_XCTEST:
       cmd = [gcs.GCLOUD, "firebase", "test", "ios", "run"]
-      if FLAGS.test_type == "game-loop":
+      test_flags.extend(["--test", self.testapp_path])
+    elif FLAGS.test_type == _GAMELOOPTEST:
+      if self.platform == _ANDROID:
+        cmd = [gcs.GCLOUD, "firebase", "test", "android", "run"]
+      elif self.platform == _IOS:
         cmd = [gcs.GCLOUD, "beta", "firebase", "test", "ios", "run"]
-        test_flags.extend(["--app", self.testapp_path])
       else:
-        test_flags.extend(["--test", self.testapp_path])
+        raise ValueError("Invalid platform, must be 'Android' or 'iOS'")
+      test_flags.extend(["--app", self.testapp_path])
     else:
-      raise ValueError("Invalid platform, must be 'Android' or 'iOS'")
+      raise ValueError("Invalid test_type, must be 'XCTEST' or 'GAMELOOPTEST'")
+    
     return cmd + self.device.get_gcloud_flags() + test_flags
 
 # All device dimensions are optional: FTL will use default options when

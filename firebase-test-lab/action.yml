@@ -1,47 +1,32 @@
 name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
+  project_id:
+    description: 'Firebase project id.'
+    required: true
   testapp_dir:
     description: 'Testapps under this  dir that will be uploaded.'
-    required: true
-  key_file:
-    description: 'Key file to access GCP service account.'
     required: true
   device:
     description: 'Device model used for testing'
     required: false
-  device_version:
-    description: 'Device version, e.g. 14.7, for ios version'
-    required: false
 outputs:
   notices_contents:
     description: 'contents of notices'
+
 runs:
   using: 'composite'
   steps:
     # `required` does not work as expected so a validation is needed.
     # `required` issue:https://github.com/actions/runner/issues/1070
   - name: Validate inputs
+    shell: bash
     run: |
       [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
-      [[ "${{ inputs.key_file }}" ]] || { echo "key_file is empty" ; exit 1; }
-    shell: bash
-  - uses: actions/setup-python@v4
-    with:
-      python-version: '3.7'
-  - name: Set up Google Cloud SDK
-    uses: google-github-actions/setup-gcloud@v0
-  - name: Install dependencies
-    run: |
-      cd "${{ github.action_path }}"
-      pip install -r requirements.txt
-    shell: bash
   - name: FTL Test
+    shell: bash
     run: |
       cd "${{ github.action_path }}"
       python triger_ftl_tests.py \
-      --testapp_dir "${{ inputs.testapp_dir }}" \
-      --key_file "${{ inputs.key_file }}" \
-      --ios_model "${{ inputs.device }}" \
-      --ios_version "${{ inputs.device_version }}"
-    shell: bash
+      --project_id "${{ inputs.project_id }}" \ 
+      --testapp_dir "${{ inputs.testapp_dir }}"

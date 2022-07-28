@@ -131,7 +131,7 @@ class Test(object):
         check=False)
     logging.info("Finished: %s\n%s", " ".join(args), result.stdout)
     if result.returncode:
-      logging.error("gCloud returned non-zero error code")
+      logging.error("gCloud returned non-zero error code: %s", result.returncode)
     ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result.stdout, re.DOTALL)
     if ftl_link:
       self.ftl_link = ftl_link.group(1)

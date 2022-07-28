@@ -31,5 +31,4 @@ runs:
   - name: FTL Test
     shell: bash
     run: |
-      cd "${{ github.action_path }}"
-      python triger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" 
+      python ${{ github.action_path }}/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" 

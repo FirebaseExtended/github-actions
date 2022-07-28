@@ -22,6 +22,7 @@ import threading
 from absl import app
 from absl import flags
 from absl import logging
+from pathlib import Path
 import attr
 
 _IOS = "ios"
@@ -33,75 +34,54 @@ _GAMELOOPTEST = "game-loop"
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
+    "project_id", None, "Firebase Project ID.")
+flags.DEFINE_string(
     "testapp_dir", None,
     "Testapps (apks and ipas) in this directory will be tested.")
-flags.DEFINE_string(
-    "project_id", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_enum(
     "test_type", _GAMELOOPTEST, [_XCTEST, _GAMELOOPTEST], "Test type that Firebase Test Lab will run.")
 flags.DEFINE_string(
-    "android_model", None,
-    "Model id for desired device. See module docstring for details on how"
-    " to get this id. If none, will use FTL's default.")
-flags.DEFINE_string(
-    "android_version", None,
-    "API level for desired device. See module docstring for details on how"
-    " to find available values. If none, will use FTL's default.")
-flags.DEFINE_string(
-    "ios_model", None,
-    "Model id for desired device. See module docstring for details on how"
-    " to get this id. If none, will use FTL's default.")
-flags.DEFINE_string(
-    "ios_version", None,
-    "iOS version for desired device. See module docstring for details on how"
-    " to find available values. If none, will use FTL's default.")
+    "test_devices", None,
+    "Model id and device version for desired device."
+    "If none, will use FTL's default.")
+
 
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
   project_id = FLAGS.project_id
+  if not project_id:
+    project_id = os.getenv('GCLOUD_PROJECT')
+    if not project_id:
+      logging.error("GCLOUD Configuration error: missing project id.")
+      return 1
+  logging.info("project_id: %s", project_id)
+
   testapp_dir = _fix_path(FLAGS.testapp_dir)
-  android_model = FLAGS.android_model
-  android_version = FLAGS.android_version
-  ios_model = FLAGS.ios_model
-  ios_version = FLAGS.ios_version
-
-  ios_device = Device(model=ios_model, version=ios_version)
-  android_device = Device(model=android_model, version=android_version)
   testapps=[]
-  for file_dir, _, file_names in os.walk(testapp_dir):
-    for file_name in file_names:
-      full_path = os.path.join(file_dir, file_name)
-      if FLAGS.test_type==_XCTEST and file_name.endswith(".zip") :
-        print("XCTest bundle, " + full_path + " is detected.")
-        testapps.append((ios_device, _IOS, full_path))
-      elif FLAGS.test_type == _GAMELOOPTEST:
-        if file_name.endswith(".apk"):
-          testapps.append((android_device, _ANDROID, full_path))
-        elif file_name.endswith(".ipa"):
-          testapps.append((ios_device, _IOS, full_path))
-
-
+  if FLAGS.test_type==_XCTEST:
+    testapps.extend(Path(testapp_dir).rglob("*.zip"))
+  if FLAGS.test_type == _GAMELOOPTEST:
+    testapps.extend(Path(testapp_dir).rglob("*.apk"))
+    testapps.extend(Path(testapp_dir).rglob("*.ipa"))
   if not testapps:
     logging.error("No testapps found.")
     return 1
-
-  logging.info("Testapps found: %s", "\n".join(path for _, _, path in testapps))
+  logging.info("Testapps found: %s", testapps)
 
   gcs_base_dir = gcs.get_unique_gcs_id()
 
   tests = []
-  for device, platform, path in testapps:
+  for path in testapps:
     # e.g. /testapps/unity/firebase_auth/app.apk -> unity_firebase_auth_app_apk
     rel_path = os.path.relpath(path, testapp_dir)
     name = rel_path.replace("\\", "_").replace("/", "_").replace(".", "_")
     tests.append(
         Test(
             project_id=project_id,
-            device=device,
-            platform=platform,
-            testapp_path=path,
+            device=None,
+            testapp_path=str(path),
             results_dir=gcs_base_dir + "/" + name))
 
   logging.info("Sending testapps to FTL")
@@ -128,7 +108,6 @@ class Test(object):
   """Holds data related to the testing of one testapp."""
   device = attr.ib()
   project_id = attr.ib()
-  platform = attr.ib()  # Android or iOS
   testapp_path = attr.ib()
   results_dir = attr.ib()  # Subdirectory on Cloud storage for this testapp
   # This will be populated after the test completes, instead of initialization.
@@ -176,44 +155,18 @@ class Test(object):
       cmd = [gcs.GCLOUD, "firebase", "test", "ios", "run"]
       test_flags.extend(["--test", self.testapp_path])
     elif FLAGS.test_type == _GAMELOOPTEST:
-      if self.platform == _ANDROID:
+      if self.testapp_path.endswith(".apk"):
         cmd = [gcs.GCLOUD, "firebase", "test", "android", "run"]
-      elif self.platform == _IOS:
-        cmd = [gcs.GCLOUD, "beta", "firebase", "test", "ios", "run"]
       else:
-        raise ValueError("Invalid platform, must be 'Android' or 'iOS'")
+        cmd = [gcs.GCLOUD, "beta", "firebase", "test", "ios", "run"]
       test_flags.extend(["--app", self.testapp_path])
     else:
       raise ValueError("Invalid test_type, must be 'XCTEST' or 'GAMELOOPTEST'")
     
-    return cmd + self.device.get_gcloud_flags() + test_flags
+    return cmd + test_flags
 
-# All device dimensions are optional: FTL will use default options when
-# a dimension isn't specified.
-@attr.s(frozen=True, eq=True)
-class Device(object):
-  """Specifies a device on Firebase Test Lab. All fields are optional."""
-  model = attr.ib(default=None)
-  version = attr.ib(default=None)
-
-  def get_gcloud_flags(self):
-    """Returns flags for gCloud command to use this device on FTL."""
-    # e.g. ["--device", "model=shamu,version=23"]
-    # FTL supports four device 'dimensions'. model, orientation, lang, and
-    # orientation. We leave orientation and lang as the defaults.
-    if not self.model and not self.version:
-      return []
-    gcloud_flags = ["--device"]
-    dimensions = []
-    if self.model:
-      dimensions.append("model=" + self.model)
-    if self.version:
-      dimensions.append("version=" + self.version)
-    gcloud_flags.append(",".join(dimensions))
-    return gcloud_flags
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("testapp_dir")
-  flags.mark_flag_as_required("project_id")
   app.run(main)
 

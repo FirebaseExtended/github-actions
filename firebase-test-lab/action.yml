@@ -3,13 +3,17 @@ description: 'Create a test on Firebase Test Lab'
 inputs:
   project_id:
     description: 'Firebase project id.'
-    required: true
+    required: false
   testapp_dir:
+    description: 'Testapps under this  dir that will be uploaded.'
+    required: true
+  test_type:
     description: 'Testapps under this  dir that will be uploaded.'
     required: true
   device:
     description: 'Device model used for testing'
     required: false
+
 outputs:
   notices_contents:
     description: 'contents of notices'
@@ -23,8 +27,9 @@ runs:
     shell: bash
     run: |
       [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
+      [[ "${{ inputs.test_type }}" ]] || { echo "test_type is empty" ; exit 1; }
   - name: FTL Test
     shell: bash
     run: |
       cd "${{ github.action_path }}"
-      python triger_ftl_tests.py --project_id "${{ inputs.project_id }}" --testapp_dir "${{ inputs.testapp_dir }}"
+      python triger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" 

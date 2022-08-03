@@ -10,9 +10,6 @@ inputs:
   device:
     description: 'Device model used for testing'
     required: false
-  credentials_json:
-    description: 'credentials_json used for gcloud auth'
-    required: false
   project_id:
     description: 'Firebase Project ID'
     required: false
@@ -40,15 +37,6 @@ runs:
     shell: bash
     run: |
       pip install -r ${{ github.action_path }}/python_requirements.txt
-  - id: 'auth'
-    if: ${{ inputs.credentials_json }} != ''
-    name: 'Authenticate to Google Cloud'
-    uses: 'google-github-actions/auth@v0'
-    with:
-      credentials_json: '${{ inputs.credentials_json }}'
-  - name: 'Set up Cloud SDK'
-    if: ${{ inputs.credentials_json }} != ''
-    uses: google-github-actions/setup-gcloud@v0
   - id: ftl_test
     shell: bash
     run: |

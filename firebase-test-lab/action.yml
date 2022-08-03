@@ -15,8 +15,9 @@ inputs:
     required: false
 
 outputs:
-  notices_contents:
-    description: 'contents of notices'
+  ftl_links:
+    description: "Links of FTL Tests"
+    value: ${{ steps.ftl_test.outputs.ftl_links }}
 
 runs:
   using: 'composite'
@@ -28,7 +29,9 @@ runs:
     run: |
       [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
       [[ "${{ inputs.test_type }}" ]] || { echo "test_type is empty" ; exit 1; }
-  - name: FTL Test
+  - name: Install python deps
+    run: pip install -r ${{ github.action_path }}/python_requirements.txt
+  - id: ftl_test
     shell: bash
     run: |
-      python ${{ github.action_path }}/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" 
+      echo "::set-output name=ftl_links::$(python ${{ github.action_path }}/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" )"

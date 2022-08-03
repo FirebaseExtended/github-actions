@@ -30,7 +30,9 @@ runs:
       [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
       [[ "${{ inputs.test_type }}" ]] || { echo "test_type is empty" ; exit 1; }
   - name: Install python deps
-    run: pip install -r ${{ github.action_path }}/python_requirements.txt
+    shell: bash
+    run: |
+      pip install -r ${{ github.action_path }}/python_requirements.txt
   - id: ftl_test
     shell: bash
     run: |

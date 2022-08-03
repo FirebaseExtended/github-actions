@@ -1,9 +1,6 @@
 name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
-  project_id:
-    description: 'Firebase project id.'
-    required: false
   testapp_dir:
     description: 'Testapps under this  dir that will be uploaded.'
     required: true

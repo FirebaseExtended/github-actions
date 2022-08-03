@@ -147,8 +147,6 @@ class Test(object):
     """Returns the args to send this testapp to FTL on the command line."""
     test_flags = [
         "--type", FLAGS.test_type,
-        "--results-bucket", self.project_id,
-        "--results-dir", self.results_dir,
         "--timeout", "600s"
     ]
 

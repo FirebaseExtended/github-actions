@@ -51,11 +51,11 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   project_id = FLAGS.project_id
-  # if not project_id:
-  #   project_id = os.getenv('GCLOUD_PROJECT')
-  #   if not project_id:
-  #     logging.error("GCLOUD Configuration error: missing project id.")
-  #     return 1
+  if not project_id:
+    project_id = os.getenv('GCLOUD_PROJECT')
+    if not project_id:
+      logging.error("GCLOUD Configuration error: missing project id.")
+      return 1
   logging.info("project_id: %s", project_id)
 
   testapp_dir = _fix_path(FLAGS.testapp_dir)

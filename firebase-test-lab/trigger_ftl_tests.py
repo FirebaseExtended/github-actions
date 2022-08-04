@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import gcs
-import json
 import os
 import re
 import subprocess
@@ -70,8 +68,6 @@ def main(argv):
     return 1
   logging.info("Testapps found: %s", testapps)
 
-  gcs_base_dir = gcs.get_unique_gcs_id()
-
   tests = []
   for path in testapps:
     # e.g. /testapps/unity/firebase_auth/app.apk -> unity_firebase_auth_app_apk
@@ -81,8 +77,7 @@ def main(argv):
         Test(
             project_id=project_id,
             device=None,
-            testapp_path=str(path),
-            results_dir=gcs_base_dir + "/" + name))
+            testapp_path=str(path)))
 
   logging.info("Sending testapps to FTL")
   tests = _run_test_on_ftl(tests, [])
@@ -110,11 +105,11 @@ class Test(object):
   device = attr.ib()
   project_id = attr.ib()
   testapp_path = attr.ib()
-  results_dir = attr.ib()  # Subdirectory on Cloud storage for this testapp
   # This will be populated after the test completes, instead of initialization.
   logs = attr.ib(init=False, default=None)
   ftl_link = attr.ib(init=False, default=None)
   raw_result_link = attr.ib(init=False, default=None)
+  results_dir = attr.ib(init=False, default=None)  # Subdirectory on Cloud storage for this testapp
 
   # This runs in a separate thread, so instead of returning values we store
   # them as fields so they can be accessed from the main thread.
@@ -151,13 +146,13 @@ class Test(object):
     ]
 
     if FLAGS.test_type==_XCTEST:
-      cmd = [gcs.GCLOUD, "firebase", "test", "ios", "run"]
+      cmd = ["gcloud", "firebase", "test", "ios", "run"]
       test_flags.extend(["--test", self.testapp_path])
     elif FLAGS.test_type == _GAMELOOPTEST:
       if self.testapp_path.endswith(".apk"):
-        cmd = [gcs.GCLOUD, "firebase", "test", "android", "run"]
+        cmd = ["gcloud", "firebase", "test", "android", "run"]
       else:
-        cmd = [gcs.GCLOUD, "beta", "firebase", "test", "ios", "run"]
+        cmd = ["gcloud", "beta", "firebase", "test", "ios", "run"]
       test_flags.extend(["--app", self.testapp_path])
     else:
       raise ValueError("Invalid test_type, must be 'XCTEST' or 'GAMELOOPTEST'")

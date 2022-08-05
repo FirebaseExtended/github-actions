@@ -31,8 +31,10 @@ _GAMELOOPTEST = "game-loop"
 
 if platform.system() == 'Windows':
   GCLOUD = "gcloud.CMD"
+  GSUTIL = "gsutil.CMD"
 else:
   GCLOUD = "gcloud"
+  GSUTIL = "gsutil"
 
 FLAGS = flags.FLAGS
 
@@ -149,6 +151,17 @@ class Test(object):
       self.raw_result_link = raw_result_link.group(1)
 
     logging.info("Test done.")
+
+    gcs_path = raw_result_link.replace("https://console.developers.google.com/storage/browser/","gs://")
+    args = [GSUTIL, "ls", "-r", gcs_path]
+    logging.info("Listing GCS contents: %s", " ".join(args))
+    result = subprocess.Popen(
+        args=" ".join(args),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True, 
+        shell=True)
+    logging.info("GCS contents: %s", result.stdout.read())
 
   @property
   def _gcloud_command(self):

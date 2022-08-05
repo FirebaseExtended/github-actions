@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import threading
+import shutil
 
 from absl import app
 from absl import flags
@@ -27,6 +28,7 @@ _ANDROID = "android"
 _XCTEST = "xctest"
 _GAMELOOPTEST = "game-loop"
 #TODO: create FTL trigger for android tests.
+GCLOUD = shutil.which("gcloud")
 
 FLAGS = flags.FLAGS
 
@@ -152,13 +154,13 @@ class Test(object):
     ]
 
     if FLAGS.test_type==_XCTEST:
-      cmd = ["gcloud", "firebase", "test", "ios", "run"]
+      cmd = [GCLOUD, "firebase", "test", "ios", "run"]
       test_flags.extend(["--test", self.testapp_path])
     elif FLAGS.test_type == _GAMELOOPTEST:
       if self.testapp_path.endswith(".apk"):
-        cmd = ["gcloud", "firebase", "test", "android", "run"]
+        cmd = [GCLOUD, "firebase", "test", "android", "run"]
       else:
-        cmd = ["gcloud", "beta", "firebase", "test", "ios", "run"]
+        cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run"]
       test_flags.extend(["--app", self.testapp_path])
     else:
       raise ValueError("Invalid test_type, must be 'XCTEST' or 'GAMELOOPTEST'")

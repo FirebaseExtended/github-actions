@@ -134,16 +134,16 @@ class Test(object):
     result = subprocess.Popen(
         args=" ".join(args),
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
         universal_newlines=True, 
         shell=True)
-    logging.info("Finished: %s\n%s", " ".join(args), result.stdout)
-    if result.returncode:
-      logging.error("gCloud returned non-zero error code: %s", result.returncode)
-    ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result.stdout, re.DOTALL)
+    logging.info("Finished: %s\n%s", " ".join(args), result.stdout.read().strip())
+    # if result.returncode:
+    logging.error("gCloud returned non-zero error code: %s", result.returncode)
+    ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result.stdout.read().strip(), re.DOTALL)
     if ftl_link:
       self.ftl_link = ftl_link.group(1)
-    raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result.stdout, re.DOTALL)
+    raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result.stdout.read().strip(), re.DOTALL)
     if raw_result_link:
       self.raw_result_link = raw_result_link.group(1)
 

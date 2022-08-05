@@ -20,7 +20,6 @@ import threading
 from absl import app
 from absl import flags
 from absl import logging
-from pathlib import Path
 import attr
 
 _IOS = "ios"

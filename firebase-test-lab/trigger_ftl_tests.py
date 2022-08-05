@@ -131,12 +131,12 @@ class Test(object):
     args = self._gcloud_command
     
     logging.info("Testapp sent: %s", " ".join(args))
-    result = subprocess.run(
-        args=args,
+    result = subprocess.Popen(
+        args=" ".join(args),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True,
-        check=False)
+        universal_newlines=True, 
+        shell=True)
     logging.info("Finished: %s\n%s", " ".join(args), result.stdout)
     if result.returncode:
       logging.error("gCloud returned non-zero error code: %s", result.returncode)

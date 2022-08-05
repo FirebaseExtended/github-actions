@@ -152,7 +152,7 @@ class Test(object):
 
     logging.info("Test done.")
 
-    gcs_path = raw_result_link.replace("https://console.developers.google.com/storage/browser/","gs://")
+    gcs_path = self.raw_result_link.replace("https://console.developers.google.com/storage/browser/","gs://")
     args = [GSUTIL, "ls", "-r", gcs_path]
     logging.info("Listing GCS contents: %s", " ".join(args))
     result = subprocess.Popen(

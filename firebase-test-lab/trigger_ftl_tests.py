@@ -137,13 +137,14 @@ class Test(object):
         stderr=subprocess.STDOUT,
         universal_newlines=True, 
         shell=True)
-    logging.info("Finished: %s\n%s", " ".join(args), result.stdout.read().strip())
-    # if result.returncode:
-    logging.error("gCloud returned non-zero error code: %s", result.returncode)
-    ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result.stdout.read().strip(), re.DOTALL)
+    result_log = result.stdout.read()
+    logging.info("Finished: %s\n%s", " ".join(args), result_log)
+    if result.returncode:
+      logging.error("gCloud returned non-zero error code: %s", result.returncode)
+    ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
     if ftl_link:
       self.ftl_link = ftl_link.group(1)
-    raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result.stdout.read().strip(), re.DOTALL)
+    raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
     if raw_result_link:
       self.raw_result_link = raw_result_link.group(1)
 

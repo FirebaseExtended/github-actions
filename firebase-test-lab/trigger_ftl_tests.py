@@ -134,7 +134,7 @@ class Test(object):
     result = subprocess.Popen(
         args=" ".join(args),
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         universal_newlines=True, 
         shell=True)
     logging.info("Finished: %s\n%s", " ".join(args), result.stdout.read().strip())

@@ -40,4 +40,4 @@ runs:
   - id: ftl_test
     shell: bash
     run: |
-      echo "::set-output name=ftl_links::$(python ${{ github.action_path }}/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" )"
+      echo "::set-output name=ftl_links::$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" )"

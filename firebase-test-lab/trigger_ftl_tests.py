@@ -58,11 +58,18 @@ def main(argv):
 
   testapp_dir = _fix_path(FLAGS.testapp_dir)
   testapps=[]
-  if FLAGS.test_type==_XCTEST:
-    testapps.extend(Path(testapp_dir).rglob("*.zip"))
-  if FLAGS.test_type == _GAMELOOPTEST:
-    testapps.extend(Path(testapp_dir).rglob("*.apk"))
-    testapps.extend(Path(testapp_dir).rglob("*.ipa"))
+  for file_dir, _, file_names in os.walk(testapp_dir):
+    for file_name in file_names:
+      full_path = os.path.join(file_dir, file_name)
+      if FLAGS.test_type==_XCTEST:
+        if file_name.endswith(".zip"):
+          testapps.append(full_path)
+      elif FLAGS.test_type == _GAMELOOPTEST:
+        if file_name.endswith(".apk"):
+          testapps.append(full_path)
+        elif file_name.endswith(".ipa"):
+          testapps.append(full_path)
+
   if not testapps:
     logging.error("No testapps found.")
     return 1
@@ -77,7 +84,7 @@ def main(argv):
         Test(
             project_id=project_id,
             device=None,
-            testapp_path=str(path)))
+            testapp_path=path))
 
   logging.info("Sending testapps to FTL")
   tests = _run_test_on_ftl(tests, [])

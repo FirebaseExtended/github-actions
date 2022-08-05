@@ -36,7 +36,7 @@ runs:
   - name: Install python deps
     shell: bash
     run: |
-      pip install -r ${{ github.action_path }}/python_requirements.txt
+      pip install absl-py attrs
   - id: ftl_test
     shell: bash
     run: |

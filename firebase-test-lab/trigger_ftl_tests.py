@@ -16,7 +16,7 @@ import os
 import re
 import subprocess
 import threading
-import shutil
+import platform
 
 from absl import app
 from absl import flags
@@ -28,7 +28,11 @@ _ANDROID = "android"
 _XCTEST = "xctest"
 _GAMELOOPTEST = "game-loop"
 #TODO: create FTL trigger for android tests.
-GCLOUD = shutil.which("gcloud")
+
+if platform.system() == 'Windows':
+  GCLOUD = "gcloud.CMD"
+else:
+  GCLOUD = "gcloud"
 
 FLAGS = flags.FLAGS
 

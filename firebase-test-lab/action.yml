@@ -29,6 +29,15 @@ runs:
     run: |
       [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
       [[ "${{ inputs.test_type }}" ]] || { echo "test_type is empty" ; exit 1; }
+  - id: 'auth'
+    name: 'Authenticate to Google Cloud'
+    uses: 'google-github-actions/auth@v0'
+    with:
+      credentials_json: '${{ env.GOOGLE_CREDENTIALS }}'
+  - name: 'Set up Cloud SDK'
+    uses: google-github-actions/setup-gcloud@v0
+    with:
+      install_components: 'beta'
   - name: Install python deps
     shell: bash
     run: |

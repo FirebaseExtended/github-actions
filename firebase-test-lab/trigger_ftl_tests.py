@@ -17,6 +17,7 @@ import re
 import subprocess
 import threading
 import platform
+import time
 
 from absl import app
 from absl import flags
@@ -145,7 +146,6 @@ class Test(object):
         shell=True)
     result_log = result.stdout.read()
     logging.info("Finished: %s\n%s", " ".join(args), result_log)
-    logging.info("Test returned code: %s", result.returncode)
     ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
     if ftl_link:
       self.ftl_link = ftl_link.group(1)
@@ -153,18 +153,23 @@ class Test(object):
     if raw_result_link:
       self.raw_result_link = raw_result_link.group(1)
 
+    while result.poll() is None:
+      # Process hasn't exited yet, let's wait some
+      time.sleep(1)
+    logging.info("Test returned code: %s", result.returncode)
+
     logging.info("Test done.")
 
-    gcs_path = self.raw_result_link.replace("https://console.developers.google.com/storage/browser/","gs://")
-    args = [GSUTIL, "ls", "-r", gcs_path]
-    logging.info("Listing GCS contents: %s", " ".join(args))
-    result = subprocess.Popen(
-        args=" ".join(args),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True, 
-        shell=True)
-    logging.info("GCS contents:\n%s", result.stdout.read())
+    # gcs_path = self.raw_result_link.replace("https://console.developers.google.com/storage/browser/","gs://")
+    # args = [GSUTIL, "ls", "-r", gcs_path]
+    # logging.info("Listing GCS contents: %s", " ".join(args))
+    # result = subprocess.Popen(
+    #     args=" ".join(args),
+    #     stdout=subprocess.PIPE,
+    #     stderr=subprocess.STDOUT,
+    #     universal_newlines=True, 
+    #     shell=True)
+    # logging.info("GCS contents:\n%s", result.stdout.read())
 
   @property
   def _gcloud_command(self):

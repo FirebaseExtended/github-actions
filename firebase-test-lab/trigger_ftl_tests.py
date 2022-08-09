@@ -186,12 +186,13 @@ class Test(object):
     ]
     android_devices = [
         "--device", "model=gts4lltevzw,version=28",
-        "--device", "model=redfin,version=30"
+        "--device", "model=redfin,version=30",
+        "--device", "model=oriole,version=33"
     ]
     ios_devices = [
-        "--device", "model=iphone8,version=12.4",
+        "--device", "model=iphonexr,version=12.4",
         "--device", "model=iphone8,version=13.6",
-        "--device", "model=iphone11pro,version=14.7"
+        "--device", "model=iphone13pro,version=15.2"
     ]
     if FLAGS.test_type==_XCTEST:
       cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", self.testapp_path]

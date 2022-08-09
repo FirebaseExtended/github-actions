@@ -2,13 +2,21 @@ name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
   testapp_dir:
-    description: 'Testapps under this  dir that will be uploaded.'
+    description: 'Testapps under this dir that will be uploaded.'
     required: true
   test_type:
-    description: 'Testapps under this  dir that will be uploaded.'
+    description: 'One of the following test types: xctest, robo, instrumentation, game-loop.'
     required: true
   device:
     description: 'Device model used for testing'
+    required: false
+  timeout:
+    description: 'Timeout for one ftl test.'
+    default: '600s'
+    required: false
+  retry:
+    description: 'Retry time on failed testapps.'
+    default: 0
     required: false
   project_id:
     description: 'Firebase Project ID'
@@ -45,4 +53,4 @@ runs:
   - id: ftl_test
     shell: bash
     run: |
-      echo "::set-output name=ftl_links::$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" )"
+      echo "::set-output name=ftl_links::$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")"

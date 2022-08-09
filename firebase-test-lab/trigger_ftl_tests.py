@@ -51,6 +51,12 @@ flags.DEFINE_string(
     "test_devices", None,
     "Model id and device version for desired device."
     "If none, will use FTL's default.")
+flags.DEFINE_string(
+    "timeout", "600s",
+    "Timeout for one ftl test.")
+flags.DEFINE_integer(
+    "retry", 0,
+    "Retry time on failed testapps.")
 
 
 def main(argv):
@@ -176,24 +182,39 @@ class Test(object):
     """Returns the args to send this testapp to FTL on the command line."""
     test_flags = [
         "--type", FLAGS.test_type,
-        "--timeout", "600s"
+        "--timeout", FLAGS.timeout
     ]
-
+    android_devices = [
+        "--device", "model=gts4lltevzw,version=28",
+        "--device", "model=redfin,version=30"
+    ]
+    ios_devices = [
+        "--device", "model=iphone8,version=12.4",
+        "--device", "model=iphone8,version=13.6",
+        "--device", "model=iphone11pro,version=14.7"
+    ]
     if FLAGS.test_type==_XCTEST:
       cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", self.testapp_path]
+      cmd.extend(ios_devices)
     elif FLAGS.test_type==_ROBO:
       cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
+      cmd.extend(android_devices)
     elif FLAGS.test_type==_INSTRUMENTATION:
       cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path, "--test", self.testapp_path]
+      cmd.extend(android_devices)
     elif FLAGS.test_type == _GAMELOOPTEST:
       if self.testapp_path.endswith(".ipa"):
         cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run", "--app", self.testapp_path]
+        cmd.extend(ios_devices)
       else:
         cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
+        cmd.extend(android_devices)
     else:
       raise ValueError("Invalid test_type")
-    
-    return cmd + test_flags
+      
+    cmd.extend(test_flags)
+
+    return cmd
 
 
 if __name__ == "__main__":

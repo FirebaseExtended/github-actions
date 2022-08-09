@@ -181,14 +181,14 @@ class Test(object):
     if FLAGS.test_type==_XCTEST:
       cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", self.testapp_path]
     elif FLAGS.test_type==_ROBO:
-      cmd = [GCLOUD, "firebase", "test", "ios", "run", "--app", self.testapp_path]
+      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
     elif FLAGS.test_type==_INSTRUMENTATION:
-      cmd = [GCLOUD, "firebase", "test", "ios", "run", "--app", self.testapp_path, "--test", self.testapp_path]
+      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path, "--test", self.testapp_path]
     elif FLAGS.test_type == _GAMELOOPTEST:
-      if self.testapp_path.endswith(".apk"):
-        cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
-      else:
+      if self.testapp_path.endswith(".ipa"):
         cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run", "--app", self.testapp_path]
+      else:
+        cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
     else:
       raise ValueError("Invalid test_type")
     

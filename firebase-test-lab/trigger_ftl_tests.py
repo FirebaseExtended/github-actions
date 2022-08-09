@@ -23,9 +23,9 @@ from absl import flags
 from absl import logging
 import attr
 
-_IOS = "ios"
-_ANDROID = "android"
 _XCTEST = "xctest"
+_ROBO = "robo"
+_INSTRUMENTATION = "instrumentation"
 _GAMELOOPTEST = "game-loop"
 #TODO: create FTL trigger for android tests.
 
@@ -69,6 +69,12 @@ def main(argv):
     for file_name in file_names:
       full_path = os.path.join(file_dir, file_name)
       if FLAGS.test_type==_XCTEST:
+        if file_name.endswith(".zip"):
+          testapps.append(full_path)
+      elif FLAGS.test_type==_ROBO:
+        if file_name.endswith(".apk"):
+          testapps.append(full_path)
+      elif FLAGS.test_type==_INSTRUMENTATION:
         if file_name.endswith(".zip"):
           testapps.append(full_path)
       elif FLAGS.test_type == _GAMELOOPTEST:
@@ -172,16 +178,18 @@ class Test(object):
     ]
 
     if FLAGS.test_type==_XCTEST:
-      cmd = [GCLOUD, "firebase", "test", "ios", "run"]
-      test_flags.extend(["--test", self.testapp_path])
+      cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", self.testapp_path]
+    elif FLAGS.test_type==_ROBO:
+      cmd = [GCLOUD, "firebase", "test", "ios", "run", "--app", self.testapp_path]
+    elif FLAGS.test_type==_INSTRUMENTATION:
+      cmd = [GCLOUD, "firebase", "test", "ios", "run", "--app", self.testapp_path, "--test", self.testapp_path]
     elif FLAGS.test_type == _GAMELOOPTEST:
       if self.testapp_path.endswith(".apk"):
-        cmd = [GCLOUD, "firebase", "test", "android", "run"]
+        cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
       else:
-        cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run"]
-      test_flags.extend(["--app", self.testapp_path])
+        cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run", "--app", self.testapp_path]
     else:
-      raise ValueError("Invalid test_type, must be 'XCTEST' or 'GAMELOOPTEST'")
+      raise ValueError("Invalid test_type")
     
     return cmd + test_flags
 

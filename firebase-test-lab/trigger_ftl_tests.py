@@ -91,9 +91,6 @@ def main(argv):
 
   tests = []
   for path in testapps:
-    # e.g. /testapps/unity/firebase_auth/app.apk -> unity_firebase_auth_app_apk
-    rel_path = os.path.relpath(path, testapp_dir)
-    name = rel_path.replace("\\", "_").replace("/", "_").replace(".", "_")
     tests.append(
         Test(
             project_id=project_id,
@@ -168,7 +165,7 @@ class Test(object):
         stderr=subprocess.STDOUT,
         universal_newlines=True, 
         shell=True)
-    logging.info("GCS contents: %s", result.stdout.read())
+    logging.info("GCS contents:\n%s", result.stdout.read())
 
   @property
   def _gcloud_command(self):

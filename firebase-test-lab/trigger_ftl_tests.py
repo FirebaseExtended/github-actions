@@ -44,7 +44,8 @@ flags.DEFINE_string(
     "testapp_dir", None,
     "Testapps (apks and ipas) in this directory will be tested.")
 flags.DEFINE_enum(
-    "test_type", _GAMELOOPTEST, [_XCTEST, _GAMELOOPTEST], "Test type that Firebase Test Lab will run.")
+    "test_type", None, [_XCTEST, _ROBO, _INSTRUMENTATION, _GAMELOOPTEST], 
+    "Test type that Firebase Test Lab will run.")
 flags.DEFINE_string(
     "test_devices", None,
     "Model id and device version for desired device."

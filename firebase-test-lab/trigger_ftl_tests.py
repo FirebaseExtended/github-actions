@@ -22,6 +22,7 @@ import time
 from absl import app
 from absl import flags
 from absl import logging
+from zipfile import ZipFile
 import attr
 
 _XCTEST = "xctest"
@@ -201,7 +202,8 @@ class Test(object):
       cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
       cmd.extend(android_devices)
     elif FLAGS.test_type==_INSTRUMENTATION:
-      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path, "--test", self.testapp_path]
+      (app_path, test_path) = _extract_android_test(self.testapp_path)
+      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", app_path, "--test", test_path]
       cmd.extend(android_devices)
     elif FLAGS.test_type == _GAMELOOPTEST:
       if self.testapp_path.endswith(".ipa"):
@@ -216,6 +218,21 @@ class Test(object):
     cmd.extend(test_flags)
 
     return cmd
+
+
+def _extract_android_test(zip_path): 
+  with ZipFile(zip_path, 'r') as zipObj:
+    output_dir = os.path.splitext(zip_path)[0]
+    zipObj.extractall(output_dir)
+    for file_dir, _, file_names in os.walk(output_dir):
+      for file_name in file_names:
+        if file_name.endswith(".apk"):
+          full_path = os.path.join(file_dir, file_name)
+          if file_name.lower().contains("test"):
+            test_path = full_path
+          else:
+            app_path = full_path
+  return (app_path, test_path)
 
 
 if __name__ == "__main__":

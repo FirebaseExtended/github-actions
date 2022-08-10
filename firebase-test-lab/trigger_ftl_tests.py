@@ -228,7 +228,7 @@ def _extract_android_test(zip_path):
       for file_name in file_names:
         if file_name.endswith(".apk"):
           full_path = os.path.join(file_dir, file_name)
-          if file_name.lower().contains("test"):
+          if "test" in file_name.lower():
             test_path = full_path
           else:
             app_path = full_path

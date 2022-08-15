@@ -160,6 +160,12 @@ class Test(object):
     if raw_result_link:
       self.raw_result_link = raw_result_link.group(1)
 
+    outcome_devices = re.findall(r"│(.*?)│(.*?)│(.*?)│", result_log, re.MULTILINE | re.DOTALL)
+    for o_d in outcome_devices:
+      if 'OUTCOME' in o_d[0]:
+        continue
+      print(o_d)
+
     while result.poll() is None:
       # Process hasn't exited yet, let's wait some
       time.sleep(1)

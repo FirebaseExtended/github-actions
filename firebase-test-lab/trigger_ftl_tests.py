@@ -45,17 +45,17 @@ def main():
   project_id = _get_project_id(FLAGS.project_id)
   if not project_id:
     logging.error("GCLOUD Configuration error: missing project id.")
-    return 1
+    exit(1)
 
   testapps = _search_testapps(FLAGS.testapp_dir, FLAGS.test_type)
   if not testapps:
     logging.error("No testapps found.")
-    return 1
+    exit(1)
 
   logging.info("Sending testapps to FTL")
   tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
   exit_code = _exit_code(tests_result)
-  return (exit_code, tests_result)
+  print(exit_code, tests_result)
 
 
 def _get_project_id(project_id):

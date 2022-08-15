@@ -49,7 +49,10 @@ runs:
   - id: ftl_test
     shell: bash
     run: |
-      ftl_test = $(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
-      echo "::set-output name=test_summary::$(echo "$ftl_test" | cut -d' ' -f2)"
-      exit $(echo "$whole_output" | cut -d' ' -f1)
-
+      test_result = $(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
+      if [[ ! -z $test_result ]]; then
+        echo "::set-output name=test_summary::$(echo "$test_result" | cut -d' ' -f2)"
+        exit $(echo "$test_result" | cut -d' ' -f1)
+      else
+        exit 1
+      fi

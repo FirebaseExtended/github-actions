@@ -46,10 +46,6 @@ runs:
     uses: google-github-actions/setup-gcloud@v0
     with:
       install_components: 'beta'
-  - name: Install python deps
-    shell: bash
-    run: |
-      pip install absl-py
   - id: ftl_test
     shell: bash
     run: |

@@ -49,7 +49,7 @@ runs:
   - name: Install python deps
     shell: bash
     run: |
-      pip install absl-py attrs
+      pip install absl-py
   - id: ftl_test
     shell: bash
     run: |

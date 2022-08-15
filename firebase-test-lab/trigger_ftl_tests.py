@@ -23,7 +23,6 @@ from absl import app
 from absl import flags
 from absl import logging
 from zipfile import ZipFile
-import attr
 
 _XCTEST = "xctest"
 _ROBO = "robo"
@@ -97,133 +96,126 @@ def main(argv):
     return 1
   logging.info("Testapps found: %s", testapps)
 
-  tests = []
-  for path in testapps:
-    tests.append(
-        Test(
-            project_id=project_id,
-            device=None,
-            testapp_path=path))
-
   logging.info("Sending testapps to FTL")
-  tests = _run_test_on_ftl(tests, [])
-  return tests
+  return _run_test_on_ftl(project_id, testapps)
 
-def _run_test_on_ftl(tests, tested_tests, retry=3):
+
+def _run_test_on_ftl(project_id, testapps):
   threads = []
-  for test in tests:
-    logging.info("Start running testapp: %s" % test.testapp_path)
-    thread = threading.Thread(target=test.run)
+  tests_result = { "project_id": project_id, "apps": [] }
+  for app in testapps:
+    logging.info("Start running testapp: %s" % app)
+    thread = threading.Thread(target=_ftl_run, args=(app, tests_result))
     threads.append(thread)
     thread.start()
-    tested_tests.append(test)
   for thread in threads:
     thread.join()
-  return tested_tests
+  return tests_result
 
 def _fix_path(path):
   """Expands ~, normalizes slashes, and converts relative paths to absolute."""
   return os.path.abspath(os.path.expanduser(path))
 
-@attr.s(frozen=False, eq=False)
-class Test(object):
-  """Holds data related to the testing of one testapp."""
-  device = attr.ib()
-  project_id = attr.ib()
-  testapp_path = attr.ib()
-  # This will be populated after the test completes, instead of initialization.
-  logs = attr.ib(init=False, default=None)
-  ftl_link = attr.ib(init=False, default=None)
-  raw_result_link = attr.ib(init=False, default=None)
-  results_dir = attr.ib(init=False, default=None)  # Subdirectory on Cloud storage for this testapp
+# This runs in a separate thread, so instead of returning values we store
+# them as fields so they can be accessed from the main thread.
+def _ftl_run(testapp_path, tests_result):
+  """Send the testapp to FTL for testing and wait for it to finish."""
+  # These execute in parallel, so we collect the output then log it at once.
+  args = _gcloud_command(testapp_path)
+  
+  logging.info("Testapp sent: %s", " ".join(args))
+  result = subprocess.Popen(
+      args=" ".join(args),
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      universal_newlines=True, 
+      shell=True)
+  result_log = result.stdout.read()
+  logging.info("Finished: %s\n%s", " ".join(args), result_log)
 
-  # This runs in a separate thread, so instead of returning values we store
-  # them as fields so they can be accessed from the main thread.
-  def run(self):
-    """Send the testapp to FTL for testing and wait for it to finish."""
-    # These execute in parallel, so we collect the output then log it at once.
-    args = self._gcloud_command
-    
-    logging.info("Testapp sent: %s", " ".join(args))
-    result = subprocess.Popen(
-        args=" ".join(args),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True, 
-        shell=True)
-    result_log = result.stdout.read()
-    logging.info("Finished: %s\n%s", " ".join(args), result_log)
-    ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
-    if ftl_link:
-      self.ftl_link = ftl_link.group(1)
-    raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
-    if raw_result_link:
-      self.raw_result_link = raw_result_link.group(1)
+  ftl_link_search = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
+  if ftl_link_search:
+    ftl_link = ftl_link_search.group(1)
+ 
+  raw_result_link_search = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
+  if raw_result_link_search:
+    raw_result_link = raw_result_link_search.group(1)
+  
+  outcome_device = []
+  # Pattern 1
+  # ┌─────────┬──────────────────────────────┬─────────────────────┐
+  # │ OUTCOME │       TEST_AXIS_VALUE        │     TEST_DETAILS    │
+  # ├─────────┼──────────────────────────────┼─────────────────────┤
+  # │ Failed  │ iphone13pro-15.2-en-portrait │ 1 test cases failed │
+  # └─────────┴──────────────────────────────┴─────────────────────┘
+  outcome_device_search = re.findall(r'│(.*?)│(.*?)│(.*?)│', result_log, re.MULTILINE | re.DOTALL)
+  for o_d in outcome_device_search:
+    if 'OUTCOME' in o_d[0]:
+      continue
+    outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
+  # Pattern 2
+  # OUTCOME: Passed
+  # TEST_AXIS_VALUE: redfin-30-en-portrait
+  # TEST_DETAILS: --
+  outcome_device_search = re.findall(r'OUTCOME:(.*?)\nTEST_AXIS_VALUE:(.*?)\nTEST_DETAILS:', result_log, re.MULTILINE | re.DOTALL)
+  for o_d in outcome_device_search:
+    outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
 
-    outcome_devices = re.findall(r"│(.*?)│(.*?)│(.*?)│", result_log, re.MULTILINE | re.DOTALL)
-    for o_d in outcome_devices:
-      if 'OUTCOME' in o_d[0]:
-        continue
-      print(o_d)
+  while result.poll() is None:
+    # Process hasn't exited yet, let's wait some
+    time.sleep(1)
+  logging.info("Test done. Returned code: %s", result.returncode)
+  
+  test_summary =  {
+    "return_code": result.returncode,
+    "testapp_path": testapp_path,
+    "test_type": FLAGS.test_type,
+    "ftl_link": ftl_link,
+    "raw_result_link":  raw_result_link,
+    "devices": outcome_device
+  }
+  tests_result.get('apps').append(test_summary)
 
-    while result.poll() is None:
-      # Process hasn't exited yet, let's wait some
-      time.sleep(1)
-    logging.info("Test returned code: %s", result.returncode)
 
-    logging.info("Test done.")
-
-    # gcs_path = self.raw_result_link.replace("https://console.developers.google.com/storage/browser/","gs://")
-    # args = [GSUTIL, "ls", "-r", gcs_path]
-    # logging.info("Listing GCS contents: %s", " ".join(args))
-    # result = subprocess.Popen(
-    #     args=" ".join(args),
-    #     stdout=subprocess.PIPE,
-    #     stderr=subprocess.STDOUT,
-    #     universal_newlines=True, 
-    #     shell=True)
-    # logging.info("GCS contents:\n%s", result.stdout.read())
-
-  @property
-  def _gcloud_command(self):
-    """Returns the args to send this testapp to FTL on the command line."""
-    test_flags = [
-        "--type", FLAGS.test_type,
-        "--timeout", FLAGS.timeout
-    ]
-    android_devices = [
-        "--device", "model=gts4lltevzw,version=28",
-        "--device", "model=redfin,version=30",
-        "--device", "model=oriole,version=33"
-    ]
-    ios_devices = [
-        "--device", "model=iphonexr,version=12.4",
-        "--device", "model=iphone8,version=13.6",
-        "--device", "model=iphone13pro,version=15.2"
-    ]
-    if FLAGS.test_type==_XCTEST:
-      cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", self.testapp_path]
+def _gcloud_command(testapp_path):
+  """Returns the args to send this testapp to FTL on the command line."""
+  test_flags = [
+      "--type", FLAGS.test_type,
+      "--timeout", FLAGS.timeout
+  ]
+  android_devices = [
+      "--device", "model=gts4lltevzw,version=28",
+      "--device", "model=redfin,version=30",
+      "--device", "model=oriole,version=33"
+  ]
+  ios_devices = [
+      "--device", "model=iphonexr,version=12.4",
+      "--device", "model=iphone8,version=13.6",
+      "--device", "model=iphone13pro,version=15.2"
+  ]
+  if FLAGS.test_type==_XCTEST:
+    cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", testapp_path]
+    cmd.extend(ios_devices)
+  elif FLAGS.test_type==_ROBO:
+    cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", testapp_path]
+    cmd.extend(android_devices)
+  elif FLAGS.test_type==_INSTRUMENTATION:
+    (app_path, test_path) = _extract_android_test(testapp_path)
+    cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", app_path, "--test", test_path]
+    cmd.extend(android_devices)
+  elif FLAGS.test_type == _GAMELOOPTEST:
+    if testapp_path.endswith(".ipa"):
+      cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run", "--app", testapp_path]
       cmd.extend(ios_devices)
-    elif FLAGS.test_type==_ROBO:
-      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
-      cmd.extend(android_devices)
-    elif FLAGS.test_type==_INSTRUMENTATION:
-      (app_path, test_path) = _extract_android_test(self.testapp_path)
-      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", app_path, "--test", test_path]
-      cmd.extend(android_devices)
-    elif FLAGS.test_type == _GAMELOOPTEST:
-      if self.testapp_path.endswith(".ipa"):
-        cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run", "--app", self.testapp_path]
-        cmd.extend(ios_devices)
-      else:
-        cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", self.testapp_path]
-        cmd.extend(android_devices)
     else:
-      raise ValueError("Invalid test_type")
-      
-    cmd.extend(test_flags)
+      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", testapp_path]
+      cmd.extend(android_devices)
+  else:
+    raise ValueError("Invalid test_type")
+    
+  cmd.extend(test_flags)
 
-    return cmd
+  return cmd
 
 
 def _extract_android_test(zip_path): 

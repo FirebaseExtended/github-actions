@@ -23,9 +23,9 @@ inputs:
     required: false
 
 outputs:
-  ftl_links:
-    description: "Links of FTL Tests"
-    value: ${{ steps.ftl_test.outputs.ftl_links }}
+  test_summary:
+    description: "FTL Test summary in JSON formats"
+    value: ${{ steps.ftl_test.outputs.test_summary }}
 
 runs:
   using: 'composite'
@@ -49,4 +49,7 @@ runs:
   - id: ftl_test
     shell: bash
     run: |
-      echo "::set-output name=ftl_links::$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")"
+      ftl_test = $(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
+      echo "::set-output name=test_summary::$(echo "$ftl_test" | cut -d' ' -f2)"
+      exit $(echo "$whole_output" | cut -d' ' -f1)
+

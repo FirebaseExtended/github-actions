@@ -53,7 +53,9 @@ def main():
     return 1
 
   logging.info("Sending testapps to FTL")
-  return _run_test_on_ftl(FLAGS, project_id, testapps)
+  tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
+  exit_code = _exit_code(tests_result)
+  return (exit_code, tests_result)
 
 
 def _get_project_id(project_id):
@@ -104,7 +106,6 @@ def _run_test_on_ftl(FLAGS, project_id, testapps):
   for thread in threads:
     thread.join()
   return tests_result
-
 
 
 # This runs in a separate thread, so instead of returning values we store
@@ -222,6 +223,16 @@ def _extract_android_test(zip_path):
           else:
             app_path = full_path
   return (app_path, test_path)
+
+
+def _exit_code(tests_result):
+  for testapp in tests_result.get("apps"):
+    if testapp.get("return_code") != "0":
+      logging.info("At least one test Failed.")
+      return 1
+
+  return 0
+
 
 def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='FTL Test trigger.')

@@ -21,6 +21,7 @@ import platform
 import time
 import argparse
 import logging
+import json
 
 from zipfile import ZipFile
 
@@ -54,8 +55,10 @@ def main():
 
   logging.info("Sending testapps to FTL")
   tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
+  logging.info(tests_result)
+  logging.info(json.dumps(tests_result))
   exit_code = _exit_code(tests_result)
-  print(exit_code, tests_result)
+  print(exit_code, json.dumps(tests_result))
 
 
 def _get_project_id(project_id):

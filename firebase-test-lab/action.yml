@@ -54,8 +54,8 @@ runs:
       if [[ ! -z ${test_result} ]]; then
         test_summary=$(echo ${test_result:2})
         echo $test_summary
-        echo ${{fromJSON(${test_summary})}}
-        echo ${{toJSON(${test_summary})}}
+        echo ${{fromJSON($(echo ${test_result:2}))}}
+        echo ${{toJSON($(echo ${test_result:2}))}}
         echo "::set-output name=test_summary::$test_summary"
         exit $(echo ${test_result:0:1})
       else

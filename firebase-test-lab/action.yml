@@ -22,10 +22,10 @@ inputs:
     description: 'Firebase Project ID'
     required: false
 
-outputs:
-  test_summary:
-    description: "FTL Test summary in JSON formats"
-    value: ${{ steps.ftl_test.outputs.test_summary }}
+# outputs:
+#   test_summary:
+#     description: "FTL Test summary in JSON formats"
+#     value: ${{ steps.ftl_test.outputs.test_summary }}
 
 runs:
   using: 'composite'

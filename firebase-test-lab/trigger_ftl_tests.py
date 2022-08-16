@@ -138,11 +138,7 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
   
   outcome_device = []
   # Pattern 1
-  # ┌─────────┬──────────────────────────────┬─────────────────────┐
-  # │ OUTCOME │       TEST_AXIS_VALUE        │     TEST_DETAILS    │
-  # ├─────────┼──────────────────────────────┼─────────────────────┤
   # │ Failed  │ iphone13pro-15.2-en-portrait │ 1 test cases failed │
-  # └─────────┴──────────────────────────────┴─────────────────────┘
   outcome_device_search = re.findall(r'│(.*?)│(.*?)│(.*?)│', result_log, re.MULTILINE | re.DOTALL)
   for o_d in outcome_device_search:
     if 'OUTCOME' in o_d[0]:

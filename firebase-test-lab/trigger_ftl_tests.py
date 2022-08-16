@@ -123,7 +123,6 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
       universal_newlines=True, 
       shell=True)
   result_log = result.stdout.read()
-  logging.info("Finished: %s\n%s", " ".join(args), result_log)
 
   ftl_link_search = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
   if ftl_link_search:
@@ -156,7 +155,7 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
   while result.poll() is None:
     # Process hasn't exited yet, let's wait some
     time.sleep(1)
-  logging.info("Test done. Returned code: %s", result.returncode)
+  logging.info("Test done: %s\nReturned code: %s\n%s", " ".join(args), result.returncode, result_log)
   
   test_summary =  {
     "return_code": result.returncode,

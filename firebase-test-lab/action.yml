@@ -28,6 +28,9 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ env.GOOGLE_CREDENTIALS }}'
     - uses: google-github-actions/setup-gcloud@v0
       with:
         install_components: 'beta'

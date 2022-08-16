@@ -32,27 +32,27 @@ runs:
   steps:
     # `required` does not work as expected so a validation is needed.
     # `required` issue:https://github.com/actions/runner/issues/1070
-  - name: Validate inputs
-    shell: bash
-    run: |
-      [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
-      [[ "${{ inputs.test_type }}" ]] || { echo "test_type is empty" ; exit 1; }
-  - id: 'auth'
-    name: 'Authenticate to Google Cloud'
-    uses: 'google-github-actions/auth@v0'
-    with:
-      credentials_json: '${{ env.GOOGLE_CREDENTIALS }}'
-  - name: 'Set up Cloud SDK'
-    uses: google-github-actions/setup-gcloud@v0
-    with:
-      install_components: 'beta'
-  - id: ftl_test
-    shell: bash
-    run: |
-      test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
-      if [[ ! -z ${test_result} ]]; then
-        echo "::set-output name=test_summary::$(echo ${test_result:2})"
-        exit $(echo ${test_result:0:1})
-      else
-        exit 1
-      fi
+    - name: Validate inputs
+      shell: bash
+      run: |
+        [[ "${{ inputs.testapp_dir }}" ]] || { echo "testapp_dir is empty" ; exit 1; }
+        [[ "${{ inputs.test_type }}" ]] || { echo "test_type is empty" ; exit 1; }
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ env.GOOGLE_CREDENTIALS }}'
+    - name: 'Set up Cloud SDK'
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        install_components: 'beta'
+    - id: ftl_test
+      shell: bash
+      run: |
+        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
+        if [[ ! -z ${test_result} ]]; then
+          echo "::set-output name=test_summary::$(echo ${test_result:2})"
+          exit $(echo ${test_result:0:1})
+        else
+          exit 1
+        fi

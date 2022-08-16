@@ -58,7 +58,7 @@ def main():
   logging.info(tests_result)
   logging.info(json.dumps(tests_result))
   exit_code = _exit_code(tests_result)
-  print(exit_code, json.dumps(tests_result))
+  print("%s %s" % (exit_code, json.dumps(tests_result)))
 
 
 def _get_project_id(project_id):

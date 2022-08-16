@@ -12,11 +12,9 @@ inputs:
     required: false
   timeout:
     description: 'Timeout for one ftl test.'
-    default: '600s'
     required: false
   retry:
     description: 'Retry time on failed testapps.'
-    default: 0
     required: false
   project_id:
     description: 'Firebase Project ID'
@@ -24,7 +22,7 @@ inputs:
 outputs:
   test_summary:
     description: "FTL Test summary in JSON formats"
-    # value: ${{ steps.ftl_test.outputs.test_summary }}
+    value: ${{ steps.ftl_test.outputs.test_summary }}
 runs:
   using: 'composite'
   steps:
@@ -37,7 +35,7 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
+        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}"")
         if [[ ! -z ${test_result} ]]; then
           echo "::set-output name=test_summary::$(echo ${test_result:2})"
           exit $(echo ${test_result:0:1})

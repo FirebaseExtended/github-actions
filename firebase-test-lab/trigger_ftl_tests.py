@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+# coding: utf-8
 # Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,6 +101,7 @@ def _fix_path(path):
 def _run_test_on_ftl(FLAGS, project_id, testapps):
   threads = []
   tests_result = { "project_id": project_id, "apps": [] }
+  logging.info("Start collecting tests_result: %s" % tests_result)
   for app in testapps:
     logging.info("Start running testapp: %s" % app)
     thread = threading.Thread(target=_ftl_run, args=(FLAGS, app, tests_result))
@@ -109,6 +109,7 @@ def _run_test_on_ftl(FLAGS, project_id, testapps):
     thread.start()
   for thread in threads:
     thread.join()
+  logging.info("End collecting tests_result: %s" % tests_result)
   return tests_result
 
 
@@ -138,6 +139,11 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
   
   outcome_device = []
   # Pattern 1
+  # ┌─────────┬──────────────────────────────┬─────────────────────┐
+  # │ OUTCOME │       TEST_AXIS_VALUE        │     TEST_DETAILS    │
+  # ├─────────┼──────────────────────────────┼─────────────────────┤
+  # │ Failed  │ iphone13pro-15.2-en-portrait │ 1 test cases failed │
+  # └─────────┴──────────────────────────────┴─────────────────────┘
   outcome_device_search = re.findall(r'│(.*?)│(.*?)│(.*?)│', result_log, re.MULTILINE | re.DOTALL)
   for o_d in outcome_device_search:
     if 'OUTCOME' in o_d[0]:
@@ -170,15 +176,15 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
 def _gcloud_command(FLAGS, testapp_path):
   """Returns the args to send this testapp to FTL on the command line."""
   test_flags = [
-    "--type", FLAGS.test_type,
-    "--timeout", FLAGS.timeout
+      "--type", FLAGS.test_type,
+      "--timeout", FLAGS.timeout
   ]
   android_devices = [
-    "--device", "model=gts4lltevzw,version=28",
-    "--device", "model=redfin,version=30"
+      "--device", "model=redfin,version=30",
+      "--device", "model=oriole,version=33"
   ]
   ios_devices = [
-    "--device", "model=iphone8,version=13.6"
+      "--device", "model=iphone8,version=13.6"
   ]
   if FLAGS.test_type==_XCTEST:
     cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", testapp_path]

@@ -228,7 +228,7 @@ def _extract_android_test(zip_path):
 
 def _exit_code(tests_result):
   for testapp in tests_result.get("apps"):
-    if testapp.get("return_code") != "0":
+    if testapp.get("return_code") != 0:
       logging.info("At least one test Failed.")
       return 1
 

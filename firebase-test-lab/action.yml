@@ -33,17 +33,17 @@ runs:
       uses: 'google-github-actions/auth@v0'
       with:
         credentials_json: '${{ env.GOOGLE_CREDENTIALS }}'
-    - name: 'Set up Cloud SDK'
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        install_components: 'beta'
-    - id: ftl_test
-      shell: bash
-      run: |
-        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
-        if [[ ! -z ${test_result} ]]; then
-          echo "::set-output name=test_summary::$(echo ${test_result:2})"
-          exit $(echo ${test_result:0:1})
-        else
-          exit 1
-        fi
+    # - name: 'Set up Cloud SDK'
+    #   uses: google-github-actions/setup-gcloud@v0
+    #   with:
+    #     install_components: 'beta'
+    # - id: ftl_test
+    #   shell: bash
+    #   run: |
+    #     test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
+    #     if [[ ! -z ${test_result} ]]; then
+    #       echo "::set-output name=test_summary::$(echo ${test_result:2})"
+    #       exit $(echo ${test_result:0:1})
+    #     else
+    #       exit 1
+    #     fi

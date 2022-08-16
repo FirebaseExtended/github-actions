@@ -55,8 +55,7 @@ def main():
 
   logging.info("Sending testapps to FTL")
   tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
-  logging.info(tests_result)
-  logging.info(json.dumps(tests_result))
+  logging.info("Test summary: %s" % tests_result)
   exit_code = _exit_code(tests_result)
   print("%s %s" % (exit_code, json.dumps(tests_result)))
 
@@ -101,15 +100,12 @@ def _fix_path(path):
 def _run_test_on_ftl(FLAGS, project_id, testapps):
   threads = []
   tests_result = { "project_id": project_id, "apps": [] }
-  logging.info("Start collecting tests_result: %s" % tests_result)
   for app in testapps:
-    logging.info("Start running testapp: %s" % app)
     thread = threading.Thread(target=_ftl_run, args=(FLAGS, app, tests_result))
     threads.append(thread)
     thread.start()
   for thread in threads:
     thread.join()
-  logging.info("End collecting tests_result: %s" % tests_result)
   return tests_result
 
 

@@ -54,7 +54,7 @@ def main():
     exit(1)
 
   logging.info("Sending testapps to FTL")
-  tests_result = _run_test_on_ftl(FLAGS, testapps)
+  tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
   logging.info("Test summary: %s" % tests_result)
   exit_code = _exit_code(tests_result)
   print("%s %s" % (exit_code, json.dumps(tests_result)))
@@ -97,9 +97,9 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run_test_on_ftl(FLAGS, testapps):
+def _run_test_on_ftl(FLAGS, project_id, testapps):
   threads = []
-  tests_result = []
+  tests_result = { "project_id": project_id, "apps": [] }
   for app in testapps:
     thread = threading.Thread(target=_ftl_run, args=(FLAGS, app, tests_result))
     threads.append(thread)
@@ -166,7 +166,7 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
     "raw_result_link":  raw_result_link,
     "devices": outcome_device
   }
-  tests_result.append(test_summary)
+  tests_result.get('apps').append(test_summary)
 
 
 def _gcloud_command(FLAGS, testapp_path):
@@ -223,7 +223,7 @@ def _extract_android_test(zip_path):
 
 
 def _exit_code(tests_result):
-  for testapp in tests_result:
+  for testapp in tests_result.get("apps"):
     if testapp.get("return_code") != 0:
       logging.info("At least one test Failed.")
       return 1

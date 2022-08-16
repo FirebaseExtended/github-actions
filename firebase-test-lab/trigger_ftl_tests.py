@@ -97,9 +97,9 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run_test_on_ftl(FLAGS, project_id, testapps):
+def _run_test_on_ftl(FLAGS, testapps):
   threads = []
-  tests_result = { "project_id": project_id, "apps": [] }
+  tests_result = []
   for app in testapps:
     thread = threading.Thread(target=_ftl_run, args=(FLAGS, app, tests_result))
     threads.append(thread)
@@ -166,7 +166,7 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
     "raw_result_link":  raw_result_link,
     "devices": outcome_device
   }
-  tests_result.get('apps').append(test_summary)
+  tests_result.append(test_summary)
 
 
 def _gcloud_command(FLAGS, testapp_path):

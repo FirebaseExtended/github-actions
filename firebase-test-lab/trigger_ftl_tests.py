@@ -202,9 +202,7 @@ def _gcloud_command(FLAGS, testapp_path):
   if FLAGS.additional_flags:
     test_flags.extend(FLAGS.additional_flags.split())
 
-    
   cmd.extend(test_flags)
-
   return cmd
 
 

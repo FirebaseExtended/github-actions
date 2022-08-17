@@ -176,17 +176,22 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
 def _gcloud_command(FLAGS, testapp_path):
   """Returns the args to send this testapp to FTL on the command line."""
   if FLAGS.test_type==_XCTEST:
-    cmd = TEST_IOS_CMD.extend(["--test", testapp_path])
+    cmd = TEST_IOS_CMD
+    cmd.extend(["--test", testapp_path])
   elif FLAGS.test_type==_ROBO:
-    cmd = TEST_ANDROID_CMD.extend(["--app", testapp_path])
+    logging.info("this is robo test")
+    cmd = TEST_ANDROID_CMD
+    cmd.extend(["--app", testapp_path])
   elif FLAGS.test_type==_INSTRUMENTATION:
     (app_path, test_path) = _extract_android_test(testapp_path)
-    cmd = TEST_ANDROID_CMD.extend(["--app", app_path, "--test", test_path])
+    cmd = TEST_ANDROID_CMD
+    cmd.extend(["--app", app_path, "--test", test_path])
   elif FLAGS.test_type == _GAMELOOPTEST:
     if testapp_path.endswith(".ipa"):
-      cmd = BETA_TEST_IOS_CMD.extend(["--app", testapp_path])
+      cmd = BETA_TEST_IOS_CMD
     else:
-      cmd = TEST_ANDROID_CMD.extend(["--app", testapp_path])
+      cmd = TEST_ANDROID_CMD
+    cmd.extend(["--app", testapp_path])
   else:
     raise ValueError("Invalid test_type")
 

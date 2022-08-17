@@ -55,7 +55,7 @@ def main():
 
   logging.info("Sending testapps to FTL")
   tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
-  logging.info("Test summary: %s" % tests_result)
+  logging.info("All Tests Done:\n%s" % json.dumps(tests_result, indent=2))
   exit_code = _exit_code(tests_result)
   print("%s %s" % (exit_code, json.dumps(tests_result)))
 

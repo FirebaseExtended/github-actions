@@ -1,22 +1,24 @@
 name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
+  arg_files:
+    description: 'Arguments in a YAML-formatted argument file. Separate by ";"'
+    required: false
   testapp_dir:
     description: 'Testapps under this dir that will be uploaded.'
-    required: true
+    required: false
   test_type:
     description: 'One of the following test types: xctest, robo, instrumentation, game-loop.'
-    required: true
+    required: false
   device:
-    description: 'Device model used for testing'
+    description: 'Device model used for testing. Separate by ";"'
     required: false
   timeout:
     description: 'Timeout for one ftl test.'
     default: '600s'
     required: false
-  retry:
-    description: 'Retry time on failed testapps.'
-    default: 0
+  additional_flags:
+    description: 'Additional flags that may be used. e.g. --xcode-version'
     required: false
   project_id:
     description: 'Firebase Project ID'
@@ -41,7 +43,7 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --retry "${{ inputs.retry }}")
+        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_files "${{ inputs.arg_files }}" --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --additional_flags "${{ inputs.additional_flags }}")
         if [[ ! -z ${test_result} ]]; then
           echo "::set-output name=test_summary::$(echo ${test_result:2})"
           exit $(echo ${test_result:0:1})

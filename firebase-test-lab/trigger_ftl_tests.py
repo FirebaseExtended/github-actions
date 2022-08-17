@@ -37,6 +37,10 @@ else:
   GCLOUD = "gcloud"
   GSUTIL = "gsutil"
 
+TEST_ANDROID_CMD = [GCLOUD, "firebase", "test", "android", "run"]
+TEST_IOS_CMD = [GCLOUD, "firebase", "test", "ios"]
+BETA_TEST_IOS_CMD = [GCLOUD, "beta", "firebase", "test", "ios"]
+
 def main():
   FLAGS = parse_cmdline_args()
 
@@ -171,36 +175,31 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
 
 def _gcloud_command(FLAGS, testapp_path):
   """Returns the args to send this testapp to FTL on the command line."""
+  if FLAGS.test_type==_XCTEST:
+    cmd = TEST_IOS_CMD.extend(["--test", testapp_path])
+  elif FLAGS.test_type==_ROBO:
+    cmd = TEST_ANDROID_CMD.extend(["--app", testapp_path])
+  elif FLAGS.test_type==_INSTRUMENTATION:
+    (app_path, test_path) = _extract_android_test(testapp_path)
+    cmd = TEST_ANDROID_CMD.extend(["--app", app_path, "--test", test_path])
+  elif FLAGS.test_type == _GAMELOOPTEST:
+    if testapp_path.endswith(".ipa"):
+      cmd = BETA_TEST_IOS_CMD.extend(["--app", testapp_path])
+    else:
+      cmd = TEST_ANDROID_CMD.extend(["--app", testapp_path])
+  else:
+    raise ValueError("Invalid test_type")
+
   test_flags = [
       "--type", FLAGS.test_type,
       "--timeout", FLAGS.timeout
   ]
-  android_devices = [
-      "--device", "model=redfin,version=30",
-      "--device", "model=oriole,version=33"
-  ]
-  ios_devices = [
-      "--device", "model=iphone8,version=13.6"
-  ]
-  if FLAGS.test_type==_XCTEST:
-    cmd = [GCLOUD, "firebase", "test", "ios", "run", "--test", testapp_path]
-    cmd.extend(ios_devices)
-  elif FLAGS.test_type==_ROBO:
-    cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", testapp_path]
-    cmd.extend(android_devices)
-  elif FLAGS.test_type==_INSTRUMENTATION:
-    (app_path, test_path) = _extract_android_test(testapp_path)
-    cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", app_path, "--test", test_path]
-    cmd.extend(android_devices)
-  elif FLAGS.test_type == _GAMELOOPTEST:
-    if testapp_path.endswith(".ipa"):
-      cmd = [GCLOUD, "beta", "firebase", "test", "ios", "run", "--app", testapp_path]
-      cmd.extend(ios_devices)
-    else:
-      cmd = [GCLOUD, "firebase", "test", "android", "run", "--app", testapp_path]
-      cmd.extend(android_devices)
-  else:
-    raise ValueError("Invalid test_type")
+  if FLAGS.test_devices:
+    for device in FLAGS.test_devices.split(";"):
+      test_flags.extend(["--device", device])
+  if FLAGS.additional_flags:
+    test_flags.extend(FLAGS.additional_flags.split())
+
     
   cmd.extend(test_flags)
 
@@ -235,6 +234,8 @@ def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='FTL Test trigger.')
   parser.add_argument('-p', '--project_id',
     default=None, help='Firebase Project ID..')
+  parser.add_argument('-a', '--arg_files', 
+    default=None, help='Arguments in a YAML-formatted argument file.')
   parser.add_argument('-d', '--testapp_dir',
     default=None, help='Testapps (apks, ipas, zips) in this directory will be tested.')
   parser.add_argument('-t', '--test_type',
@@ -243,11 +244,11 @@ def parse_cmdline_args():
     default=None, help='Model id and device version for desired device. If none, will use FTL default.')
   parser.add_argument('-o', '--timeout', 
     default="600s", help='Timeout for one ftl test.')
-  parser.add_argument('-r', '--retry', 
-    default=0, help='List of operating systems to build for.')
-  parser.add_argument('--log_level', default='info',
-    help="Retry time on failed testapps.")
+  parser.add_argument('-f', '--additional_flags', 
+    default=None, help='Additional flags that may be used.')
   args = parser.parse_args()
+  if not args.arg_files and (not args.testapp_dir and not args.test_type):
+    raise ValueError("Must specify --arg_files or (--testapp_dir and --test_type)")
   return args
 
 

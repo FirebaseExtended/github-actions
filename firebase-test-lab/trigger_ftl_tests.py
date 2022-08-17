@@ -38,8 +38,8 @@ else:
   GSUTIL = "gsutil"
 
 TEST_ANDROID_CMD = [GCLOUD, "firebase", "test", "android", "run"]
-TEST_IOS_CMD = [GCLOUD, "firebase", "test", "ios"]
-BETA_TEST_IOS_CMD = [GCLOUD, "beta", "firebase", "test", "ios"]
+TEST_IOS_CMD = [GCLOUD, "firebase", "test", "ios", "run"]
+BETA_TEST_IOS_CMD = [GCLOUD, "beta", "firebase", "test", "ios", "run"]
 
 def main():
   FLAGS = parse_cmdline_args()

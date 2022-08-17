@@ -10,7 +10,7 @@ inputs:
   test_type:
     description: 'One of the following test types: xctest, robo, instrumentation, game-loop.'
     required: false
-  device:
+  test_devices:
     description: 'Device model used for testing. Separate by ";"'
     required: false
   timeout:
@@ -43,7 +43,7 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_files "${{ inputs.arg_files }}" --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --additional_flags "${{ inputs.additional_flags }}")
+        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_files "${{ inputs.arg_files }}" --testapp_dir "${{ inputs.testapp_dir }}" --test_type "${{ inputs.test_type }}" --timeout "${{ inputs.timeout }}" --test_devices "${{ inputs.test_devices }}" --additional_flags "${{ inputs.additional_flags }}")
         if [[ ! -z ${test_result} ]]; then
           echo "::set-output name=test_summary::$(echo ${test_result:2})"
           exit $(echo ${test_result:0:1})

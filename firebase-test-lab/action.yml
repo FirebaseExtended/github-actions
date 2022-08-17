@@ -29,7 +29,7 @@ runs:
   using: 'composite'
   steps:
     - uses: 'google-github-actions/auth@v0'
-     if: (${{ env.WORKLOAD_IDENTITY_PROVIDER }} && ${{ env.FIREBASE_SERVICE_ACCOUNT }}) || ${{ env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
+      if: (${{ env.WORKLOAD_IDENTITY_PROVIDER }} && ${{ env.FIREBASE_SERVICE_ACCOUNT }}) || ${{ env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
       with:
         credentials_json: '${{ env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}'
         workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'

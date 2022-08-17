@@ -177,28 +177,25 @@ def _gcloud_command(FLAGS, testapp_path):
   """Returns the args to send this testapp to FTL on the command line."""
   if FLAGS.test_type==_XCTEST:
     cmd = TEST_IOS_CMD
-    cmd.extend(["--test", testapp_path])
-  elif FLAGS.test_type==_ROBO:
-    logging.info("this is robo test")
+  elif FLAGS.test_type==_ROBO or FLAGS.test_type==_INSTRUMENTATION:
     cmd = TEST_ANDROID_CMD
-    cmd.extend(["--app", testapp_path])
-  elif FLAGS.test_type==_INSTRUMENTATION:
-    (app_path, test_path) = _extract_android_test(testapp_path)
-    cmd = TEST_ANDROID_CMD
-    cmd.extend(["--app", app_path, "--test", test_path])
   elif FLAGS.test_type == _GAMELOOPTEST:
     if testapp_path.endswith(".ipa"):
       cmd = BETA_TEST_IOS_CMD
     else:
       cmd = TEST_ANDROID_CMD
-    cmd.extend(["--app", testapp_path])
   else:
     raise ValueError("Invalid test_type")
 
-  test_flags = [
-      "--type", FLAGS.test_type,
-      "--timeout", FLAGS.timeout
-  ]
+  if FLAGS.test_type==_XCTEST:
+    test_flags = ["--test", testapp_path]
+  elif FLAGS.test_type==_ROBO or FLAGS.test_type == _GAMELOOPTEST:
+    test_flags = ["--app", testapp_path]
+  elif FLAGS.test_type==_INSTRUMENTATION:
+    (app_path, test_path) = _extract_android_test(testapp_path)
+    test_flags = ["--app", app_path, "--test", test_path]
+
+  test_flags.extend(["--type", FLAGS.test_type, "--timeout", FLAGS.timeout])
   if FLAGS.test_devices:
     for device in FLAGS.test_devices.split(";"):
       test_flags.extend(["--device", device])

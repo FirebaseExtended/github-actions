@@ -52,13 +52,7 @@ def main():
     logging.error("GCLOUD Configuration error: missing project id.")
     exit(1)
 
-  testapps = _search_testapps(FLAGS.testapp_dir, FLAGS.test_type)
-  if not testapps:
-    logging.error("No testapps found.")
-    exit(1)
-
-  logging.info("Sending testapps to FTL")
-  tests_result = _run_test_on_ftl(FLAGS, project_id, testapps)
+  tests_result = _run_test_on_ftl(FLAGS)
   logging.info("All Tests Done:\n%s" % json.dumps(tests_result, indent=2))
   exit_code = _exit_code(tests_result)
   print("%s %s" % (exit_code, json.dumps(tests_result)))
@@ -101,11 +95,24 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run_test_on_ftl(FLAGS, project_id, testapps):
+def _run_test_on_ftl(FLAGS):
+  ftl_cmd_list = []
+  if FLAGS.arg_files:
+    for arg_file in FLAGS.arg_files.split(";"):
+      ftl_cmd_list.append(_ftl_cmd_with_arg_file(arg_file))
+  else:
+    testapps = _search_testapps(FLAGS.testapp_dir, FLAGS.test_type)
+    if not testapps:
+      logging.error("No testapps found.")
+      exit(1)
+    for app in testapps:
+      ftl_cmd_list.append(_ftl_cmd_with_flags(FLAGS, app))
+
+  logging.info("Sending testapps to FTL")
   threads = []
-  tests_result = { "project_id": project_id, "apps": [] }
-  for app in testapps:
-    thread = threading.Thread(target=_ftl_run, args=(FLAGS, app, tests_result))
+  tests_result = { "apps": [] }
+  for ftl_cmd in ftl_cmd_list:
+    thread = threading.Thread(target=_ftl_run, args=(FLAGS, ftl_cmd, tests_result))
     threads.append(thread)
     thread.start()
   for thread in threads:
@@ -115,14 +122,12 @@ def _run_test_on_ftl(FLAGS, project_id, testapps):
 
 # This runs in a separate thread, so instead of returning values we store
 # them as fields so they can be accessed from the main thread.
-def _ftl_run(FLAGS, testapp_path, tests_result):
+def _ftl_run(FLAGS, ftl_cmd, tests_result):
   """Send the testapp to FTL for testing and wait for it to finish."""
   # These execute in parallel, so we collect the output then log it at once.
-  args = _gcloud_command(FLAGS, testapp_path)
-  
-  logging.info("Testapp sent: %s", " ".join(args))
+  logging.info("Testapp sent: %s", " ".join(ftl_cmd))
   result = subprocess.Popen(
-      args=" ".join(args),
+      args=" ".join(ftl_cmd),
       stdout=subprocess.PIPE,
       stderr=subprocess.STDOUT,
       universal_newlines=True, 
@@ -166,7 +171,7 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
   
   test_summary =  {
     "return_code": result.returncode,
-    "testapp_path": testapp_path,
+    # "testapp_path": testapp_path,
     "test_type": FLAGS.test_type,
     "ftl_link": ftl_link,
     "raw_result_link":  raw_result_link,
@@ -175,7 +180,40 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
   tests_result.get('apps').append(test_summary)
 
 
-def _gcloud_command(FLAGS, testapp_path):
+def _ftl_cmd_with_arg_file(arg_file):
+  """Returns the args to send this testapp to FTL on the command line."""
+  # if FLAGS.test_type==_XCTEST:
+  #   cmd = TEST_IOS_CMD
+  # elif FLAGS.test_type==_ROBO or FLAGS.test_type==_INSTRUMENTATION:
+  #   cmd = TEST_ANDROID_CMD
+  # elif FLAGS.test_type == _GAMELOOPTEST:
+  #   if testapp_path.endswith(".ipa"):
+  #     cmd = BETA_TEST_IOS_CMD
+  #   else:
+  #     cmd = TEST_ANDROID_CMD
+  # else:
+  #   raise ValueError("Invalid test_type")
+
+  # if FLAGS.test_type==_XCTEST:
+  #   test_flags = ["--test", testapp_path]
+  # elif FLAGS.test_type==_ROBO or FLAGS.test_type == _GAMELOOPTEST:
+  #   test_flags = ["--app", testapp_path]
+  # elif FLAGS.test_type==_INSTRUMENTATION:
+  #   (app_path, test_path) = _extract_android_test(testapp_path)
+  #   test_flags = ["--app", app_path, "--test", test_path]
+
+  # test_flags.extend(["--type", FLAGS.test_type, "--timeout", FLAGS.timeout])
+  # if FLAGS.test_devices:
+  #   for device in FLAGS.test_devices.split(";"):
+  #     test_flags.extend(["--device", device])
+  # if FLAGS.additional_flags:
+  #   test_flags.extend(FLAGS.additional_flags.split())
+
+  cmd.extend(test_flags)
+  return cmd
+
+
+def _ftl_cmd_with_flags(FLAGS, testapp_path):
   """Returns the args to send this testapp to FTL on the command line."""
   if FLAGS.test_type==_XCTEST:
     cmd = TEST_IOS_CMD

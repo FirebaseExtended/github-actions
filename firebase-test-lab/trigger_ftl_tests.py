@@ -112,7 +112,7 @@ def _run_test_on_ftl(FLAGS):
   threads = []
   tests_result = { "apps": [] }
   for ftl_cmd in ftl_cmd_list:
-    thread = threading.Thread(target=_ftl_run, args=(FLAGS, ftl_cmd, tests_result))
+    thread = threading.Thread(target=_ftl_run, args=(FLAGS, " ".join(ftl_cmd), tests_result))
     threads.append(thread)
     thread.start()
   for thread in threads:
@@ -125,9 +125,9 @@ def _run_test_on_ftl(FLAGS):
 def _ftl_run(FLAGS, ftl_cmd, tests_result):
   """Send the testapp to FTL for testing and wait for it to finish."""
   # These execute in parallel, so we collect the output then log it at once.
-  logging.info("Testapp sent: %s", " ".join(ftl_cmd))
+  logging.info("Testapp sent: %s", ftl_cmd)
   result = subprocess.Popen(
-      args=" ".join(ftl_cmd),
+      args=ftl_cmd,
       stdout=subprocess.PIPE,
       stderr=subprocess.STDOUT,
       universal_newlines=True, 
@@ -167,7 +167,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
   while result.poll() is None:
     # Process hasn't exited yet, let's wait some
     time.sleep(1)
-  logging.info("Test done: %s\nReturned code: %s\n%s", " ".join(args), result.returncode, result_log)
+  logging.info("Test done: %s\nReturned code: %s\n%s", ftl_cmd, result.returncode, result_log)
   
   test_summary =  {
     "return_code": result.returncode,

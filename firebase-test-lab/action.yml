@@ -1,7 +1,7 @@
 name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
-  arg_files:
+  arg_groups:
     description: 'Arguments in a YAML-formatted argument file. Separate by ";"'
     required: false
   testapp_dir:
@@ -43,7 +43,10 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_files="${{ inputs.arg_files }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --additional_flags="${{ inputs.additional_flags }}")
+        if [[ ! -z ${{ inputs.arg_groups }} ]]; then
+          pip install pyyaml
+        fi
+        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_groups="${{ inputs.arg_groups }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --additional_flags="${{ inputs.additional_flags }}")
         if [[ ! -z ${test_result} ]]; then
           echo "::set-output name=test_summary::$(echo ${test_result:2})"
           exit $(echo ${test_result:0:1})

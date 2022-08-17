@@ -22,6 +22,7 @@ import time
 import argparse
 import logging
 import json
+import yaml
 
 from zipfile import ZipFile
 
@@ -97,9 +98,9 @@ def _fix_path(path):
 
 def _run_test_on_ftl(FLAGS):
   ftl_cmd_list = []
-  if FLAGS.arg_files:
-    for arg_file in FLAGS.arg_files.split(";"):
-      ftl_cmd_list.append(_ftl_cmd_with_arg_file(arg_file))
+  if FLAGS.arg_groups:
+    for arg_group in FLAGS.arg_groups.split(";"):
+      ftl_cmd_list.append(_ftl_cmd_with_arg_group(arg_group))
   else:
     testapps = _search_testapps(FLAGS.testapp_dir, FLAGS.test_type)
     if not testapps:
@@ -180,36 +181,30 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
   tests_result.get('apps').append(test_summary)
 
 
-def _ftl_cmd_with_arg_file(arg_file):
+def _ftl_cmd_with_arg_group(arg_group):
   """Returns the args to send this testapp to FTL on the command line."""
-  # if FLAGS.test_type==_XCTEST:
-  #   cmd = TEST_IOS_CMD
-  # elif FLAGS.test_type==_ROBO or FLAGS.test_type==_INSTRUMENTATION:
-  #   cmd = TEST_ANDROID_CMD
-  # elif FLAGS.test_type == _GAMELOOPTEST:
-  #   if testapp_path.endswith(".ipa"):
-  #     cmd = BETA_TEST_IOS_CMD
-  #   else:
-  #     cmd = TEST_ANDROID_CMD
-  # else:
-  #   raise ValueError("Invalid test_type")
+  file_path, group_name = arg_group.split(":")
+  with open(file_path, "r") as stream:
+    try:
+      all_arg_groups = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+      logging.error(exc)
 
-  # if FLAGS.test_type==_XCTEST:
-  #   test_flags = ["--test", testapp_path]
-  # elif FLAGS.test_type==_ROBO or FLAGS.test_type == _GAMELOOPTEST:
-  #   test_flags = ["--app", testapp_path]
-  # elif FLAGS.test_type==_INSTRUMENTATION:
-  #   (app_path, test_path) = _extract_android_test(testapp_path)
-  #   test_flags = ["--app", app_path, "--test", test_path]
+  test_type = all_arg_groups.get(group_name).get("type")
+  if test_type==_XCTEST:
+    cmd = TEST_IOS_CMD
+  elif test_type==_ROBO or test_type==_INSTRUMENTATION:
+    cmd = TEST_ANDROID_CMD
+  elif test_type == _GAMELOOPTEST:
+    testapp_path = all_arg_groups.get(group_name).get("app")
+    if testapp_path.endswith(".ipa"):
+      cmd = BETA_TEST_IOS_CMD
+    else:
+      cmd = TEST_ANDROID_CMD
+  else:
+    raise ValueError("Invalid test_type")
 
-  # test_flags.extend(["--type", FLAGS.test_type, "--timeout", FLAGS.timeout])
-  # if FLAGS.test_devices:
-  #   for device in FLAGS.test_devices.split(";"):
-  #     test_flags.extend(["--device", device])
-  # if FLAGS.additional_flags:
-  #   test_flags.extend(FLAGS.additional_flags.split())
-
-  cmd.extend(test_flags)
+  cmd.append(arg_group)
   return cmd
 
 
@@ -277,7 +272,7 @@ def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='FTL Test trigger.')
   parser.add_argument('-p', '--project_id',
     default=None, help='Firebase Project ID..')
-  parser.add_argument('-a', '--arg_files', 
+  parser.add_argument('-a', '--arg_groups', 
     default=None, help='Arguments in a YAML-formatted argument file.')
   parser.add_argument('-d', '--testapp_dir',
     default=None, help='Testapps (apks, ipas, zips) in this directory will be tested.')
@@ -290,8 +285,8 @@ def parse_cmdline_args():
   parser.add_argument('-f', '--additional_flags', 
     default=None, help='Additional flags that may be used.')
   args = parser.parse_args()
-  if not (args.arg_files or (args.testapp_dir and args.test_type)):
-    raise ValueError("Must specify --arg_files or (--testapp_dir and --test_type)")
+  if not (args.arg_groups or (args.testapp_dir and args.test_type)):
+    raise ValueError("Must specify --arg_groups or (--testapp_dir and --test_type)")
   return args
 
 

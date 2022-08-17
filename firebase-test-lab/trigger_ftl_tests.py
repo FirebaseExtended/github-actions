@@ -252,7 +252,7 @@ def parse_cmdline_args():
   parser.add_argument('-f', '--additional_flags', 
     default=None, help='Additional flags that may be used.')
   args = parser.parse_args()
-  if not args.arg_files and (not args.testapp_dir and not args.test_type):
+  if not (args.arg_files or (args.testapp_dir and args.test_type)):
     raise ValueError("Must specify --arg_files or (--testapp_dir and --test_type)")
   return args
 

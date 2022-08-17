@@ -129,10 +129,12 @@ def _ftl_run(FLAGS, testapp_path, tests_result):
       shell=True)
   result_log = result.stdout.read()
 
+  ftl_link = ""
   ftl_link_search = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
   if ftl_link_search:
     ftl_link = ftl_link_search.group(1)
  
+  raw_result_link = ""
   raw_result_link_search = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
   if raw_result_link_search:
     raw_result_link = raw_result_link_search.group(1)

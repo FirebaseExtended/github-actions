@@ -43,9 +43,7 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        if [[ ! -z "${{ inputs.arg_groups }}" ]]; then
-          pip install pyyaml
-        fi
+        pip install pyyaml
         test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_groups="${{ inputs.arg_groups }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --additional_flags="${{ inputs.additional_flags }}")
         if [[ ! -z ${test_result} ]]; then
           echo "::set-output name=test_summary::$(echo ${test_result:2})"

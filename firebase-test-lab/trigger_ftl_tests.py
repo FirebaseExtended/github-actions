@@ -48,11 +48,6 @@ def main():
   logging.basicConfig(level=logging.DEBUG)
   logging.getLogger(__name__)
 
-  project_id = _get_project_id(FLAGS.project_id)
-  if not project_id:
-    logging.error("GCLOUD Configuration error: missing project id.")
-    exit(1)
-
   tests_result = _run_test_on_ftl(FLAGS)
   logging.info("All Tests Done:\n%s" % json.dumps(tests_result, indent=2))
   exit_code = _exit_code(tests_result)
@@ -192,18 +187,18 @@ def _ftl_cmd_with_arg_group(arg_group):
 
   test_type = all_arg_groups.get(group_name).get("type")
   if test_type==_XCTEST:
-    cmd = TEST_IOS_CMD
+    cmd = TEST_IOS_CMD.copy()
   elif test_type==_ROBO or test_type==_INSTRUMENTATION:
-    cmd = TEST_ANDROID_CMD
+    cmd = TEST_ANDROID_CMD.copy()
   elif test_type == _GAMELOOPTEST:
     testapp_path = all_arg_groups.get(group_name).get("app")
     if testapp_path.endswith(".ipa"):
-      cmd = BETA_TEST_IOS_CMD
+      cmd = BETA_TEST_IOS_CMD.copy()
     else:
-      cmd = TEST_ANDROID_CMD
+      cmd = TEST_ANDROID_CMD.copy()
   else:
     raise ValueError("Invalid test_type")
-
+  
   cmd.append(arg_group)
   return cmd
 

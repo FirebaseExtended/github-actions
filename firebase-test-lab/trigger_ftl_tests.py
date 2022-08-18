@@ -130,6 +130,11 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
       shell=True)
   result_log = result.stdout.read()
 
+  testapp_path = ""
+  testapp_path_search = re.search(r'Uploading \[(.*?)\] to Firebase Test Lab', result_log, re.MULTILINE | re.DOTALL)
+  if testapp_path_search:
+    testapp_path = testapp_path_search.group(1)
+
   ftl_link = ""
   ftl_link_search = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
   if ftl_link_search:
@@ -167,7 +172,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
   
   test_summary =  {
     "return_code": result.returncode,
-    # "testapp_path": testapp_path,
+    "testapp_path": testapp_path,
     "test_type": FLAGS.test_type,
     "ftl_link": ftl_link,
     "raw_result_link":  raw_result_link,

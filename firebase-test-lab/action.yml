@@ -5,7 +5,7 @@ inputs:
     description: 'Arguments in a YAML-formatted argument file. Separate by ";"'
     required: false
   testapp_dir:
-    description: 'Testapps under this dir that will be uploaded.'
+    description: 'Testapps under this dir that will be tested.'
     required: false
   test_type:
     description: 'One of the following test types: xctest, robo, instrumentation, game-loop.'
@@ -18,7 +18,7 @@ inputs:
     default: '600s'
     required: false
   additional_flags:
-    description: 'Additional flags that may be used. e.g. --xcode-version'
+    description: 'Additional flags and values that may be used. e.g. --xcode-version=11.3'
     required: false
   project_id:
     description: 'Firebase Project ID'
@@ -30,6 +30,7 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    # Setup GCould Env if account infomation was provided
     - uses: 'google-github-actions/auth@v0'
       if: (env.WORKLOAD_IDENTITY_PROVIDER && env.FIREBASE_SERVICE_ACCOUNT) || env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS
       with:
@@ -43,8 +44,11 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        pip install pyyaml
+        pip install pyyaml # pyyaml is used to validate the YAML argument file.
+        
         test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_groups="${{ inputs.arg_groups }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --additional_flags="${{ inputs.additional_flags }}")
+        
+        # first character in test_result is the exit code (0 or 1); the rest are the JSON format test summary.
         if [[ ! -z ${test_result} ]]; then
           echo "::set-output name=test_summary::$(echo ${test_result:2})"
           exit $(echo ${test_result:0:1})

@@ -56,13 +56,13 @@ runs:
   steps:
     # Setup GCould Env if account infomation was provided
     - uses: 'google-github-actions/auth@v0'
-      if: (input.workload_identity_provider && input.service_account) || input.credentials_json
+      if: (inputs.workload_identity_provider && inputs.service_account) || inputs.credentials_json
       with:
-        credentials_json: '${{ input.credentials_json }}'
-        workload_identity_provider: '${{ input.workload_identity_provider }}'
-        service_account: '${{ input.service_account }}'
+        credentials_json: '${{ inputs.credentials_json }}'
+        workload_identity_provider: '${{ inputs.workload_identity_provider }}'
+        service_account: '${{ inputs.service_account }}'
     - uses: google-github-actions/setup-gcloud@v0
-      if: (input.workload_identity_provider && input.service_account) || input.credentials_json
+      if: (inputs.workload_identity_provider && inputs.service_account) || inputs.credentials_json
       with:
         install_components: 'beta'
     - id: ftl_test

@@ -248,7 +248,7 @@ def _ftl_cmd_with_arg_group(arg_group):
 
   test_type = all_arg_groups.get(group_name).get("type")
   if test_type==ROBO or test_type==INSTRUMENTATION:
-    cmd = TEST_ANDROID_CMD.copy()
+    cmd = TEST_ANDROID_CMD[:]
   else:
     raise ValueError("Invalid test_type. Only robo & instrumentation tests support arg_group")
   
@@ -259,14 +259,14 @@ def _ftl_cmd_with_arg_group(arg_group):
 def _ftl_cmd_with_flags(FLAGS, testapp_path):
   """Returns the cmd to send this testapp to FTL on the command line."""
   if FLAGS.test_type==XCTEST:
-    cmd = TEST_IOS_CMD.copy()
+    cmd = TEST_IOS_CMD[:]
   elif FLAGS.test_type==ROBO or FLAGS.test_type==INSTRUMENTATION:
-    cmd = TEST_ANDROID_CMD.copy()
+    cmd = TEST_ANDROID_CMD[:]
   elif FLAGS.test_type == GAMELOOP:
     if testapp_path.endswith(".ipa"):
-      cmd = BETA_TEST_IOS_CMD.copy()
+      cmd = BETA_TEST_IOS_CMD[:]
     else:
-      cmd = TEST_ANDROID_CMD.copy()
+      cmd = TEST_ANDROID_CMD[:]
   else:
     raise ValueError("Invalid test_type")
 

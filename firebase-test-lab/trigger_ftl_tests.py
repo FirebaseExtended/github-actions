@@ -103,7 +103,6 @@ BETA_TEST_IOS_CMD = [GCLOUD, "beta", "firebase", "test", "ios", "run"]
 
 def main():
   logging.basicConfig(level=logging.DEBUG)
-  logging.getLogger(__name__)
 
   FLAGS = parse_cmdline_args()
   tests_result = _run_test_on_ftl(FLAGS)

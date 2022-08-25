@@ -1,3 +1,17 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
@@ -8,13 +22,13 @@ inputs:
     description: 'Testapps under this dir that will be tested.'
     required: false
   test_type:
-    description: 'One of the following test types: xctest, robo, instrumentation, game-loop.'
+    description: 'One of the following test types: xctest, robo, instrumentation, game-loop'
     required: false
   test_devices:
     description: 'Device model used for testing. Separate by ";"'
     required: false
   timeout:
-    description: 'Timeout for one ftl test.'
+    description: 'Timeout for one ftl test'
     default: '600s'
     required: false
   additional_flags:
@@ -25,7 +39,7 @@ inputs:
     required: false
 outputs:
   test_summary:
-    description: "FTL Test summary in JSON formats"
+    description: "FTL Test summary in the JSON format"
     value: ${{ steps.ftl_test.outputs.test_summary }}
 runs:
   using: 'composite'

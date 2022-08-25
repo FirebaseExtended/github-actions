@@ -15,44 +15,54 @@
 name: 'Firebase Test Lab Testing'
 description: 'Create a test on Firebase Test Lab'
 inputs:
+  credentials_json:
+    description: 'The Google Cloud JSON service account key to use for authentication.'
+    required: false
+  workload_identity_provider:
+    description: 'The full identifier of the Workload Identity Provider, including the project number, pool name, and provider name.'
+    required: false
+  service_account:
+    description: 'Email address or unique identifier of the Google Cloud service account. Required if "workload_identity_provider" is specified.'
+    required: false
   arg_groups:
-    description: 'Arguments in a YAML-formatted argument file. Separate by ";"'
+    description: 'Arguments in a YAML-formatted argument file. Separate by ";".'
     required: false
   testapp_dir:
     description: 'Testapps under this dir that will be tested.'
     required: false
   test_type:
-    description: 'One of the following test types: xctest, robo, instrumentation, game-loop'
+    description: 'One of the following test types: xctest, robo, instrumentation, game-loop.'
     required: false
   test_devices:
-    description: 'Device model used for testing. Separate by ";"'
+    description: 'Device model used for testing. Separate by ";".'
     required: false
   timeout:
-    description: 'Timeout for one ftl test'
+    description: 'Timeout for one ftl test.'
     default: '600s'
     required: false
   additional_flags:
-    description: 'Additional flags and values that may be used. e.g. --xcode-version=11.3'
+    description: 'Additional flags and values that may be used. e.g. --xcode-version=11.3.'
     required: false
   project_id:
-    description: 'Firebase Project ID'
+    description: 'Firebase Project ID.'
     required: false
 outputs:
   test_summary:
     description: "FTL Test summary in the JSON format"
     value: ${{ steps.ftl_test.outputs.test_summary }}
+
 runs:
   using: 'composite'
   steps:
     # Setup GCould Env if account infomation was provided
     - uses: 'google-github-actions/auth@v0'
-      if: (env.WORKLOAD_IDENTITY_PROVIDER && env.FIREBASE_SERVICE_ACCOUNT) || env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS
+      if: (input.workload_identity_provider && input.service_account) || input.credentials_json
       with:
-        credentials_json: '${{ env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}'
-        workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'
-        service_account: '${{ env.FIREBASE_SERVICE_ACCOUNT }}'
+        credentials_json: '${{ input.credentials_json }}'
+        workload_identity_provider: '${{ input.workload_identity_provider }}'
+        service_account: '${{ input.service_account }}'
     - uses: google-github-actions/setup-gcloud@v0
-      if: (env.WORKLOAD_IDENTITY_PROVIDER && env.FIREBASE_SERVICE_ACCOUNT) || env.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS
+      if: (input.workload_identity_provider && input.service_account) || input.credentials_json
       with:
         install_components: 'beta'
     - id: ftl_test

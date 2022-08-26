@@ -41,6 +41,7 @@ Summary example:
     "project_id": ${project_id},
     "apps": [
       { # app_1
+        "cmd": ${cmd},
         "return_code": ${return_code}, # Script exit codes.
         "testapp_path": ${app_path},
         "test_type": ${test_type}, # game-loop, xctest, robo, instrumentation
@@ -193,6 +194,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
       shell=True)
   result_log = result.stdout.read()
 
+  # Use Regex to filter the test information, Until we have better APIs.
   # Generate test summary by using regex search ftl cmd logs
   testapp_path = ""
   testapp_path_search = re.search(r'Uploading \[(.*?)\] to Firebase Test Lab', result_log, re.MULTILINE | re.DOTALL)
@@ -235,6 +237,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
   logging.info("Test done: %s\nReturned code: %s\n%s", ftl_cmd, result.returncode, result_log)
   
   test_summary =  {
+    "cmd": ftl_cmd,
     "return_code": result.returncode,
     "testapp_path": testapp_path,
     "test_type": FLAGS.test_type,

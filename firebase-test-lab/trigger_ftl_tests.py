@@ -26,10 +26,15 @@ Usage:
 This will recursively search testapps under dir "~/testapps" for apks, ipas,
 and zips, send them to FTL, and generate test summary: 
 
-Note: For android instrumentation testapps, please compress both apks in a
-zip file and make sure the test apk name contains string "test". e.g. 
+TO-DO: For android instrumentation testapps, needs better design
+Note: Currently, please compress both apks in a zip file and make sure the 
+test apk name contains string "test" and the app apk doesn't. e.g. 
   
   app-debug-unaligned.apk & app-debug-test-unaligned.apk -> app.zip
+
+Anrdoid robo tests & instrumentation tests also accept arguments in a 
+YAML-formatted argument file. For more information: 
+https://cloud.google.com/sdk/gcloud/reference/topic/arg-files
 
 Summary example:
   {
@@ -64,10 +69,6 @@ Examples:
 Test on two iOS devices:
   --test_devices "model=iphone8,version=13.6;model=iphone8,version=14.7"
 
-robo tests & instrumentation tests also accept arguments in a YAML-formatted 
-argument file. For more information: 
-https://cloud.google.com/sdk/gcloud/reference/topic/arg-files
-
 """
 
 import os
@@ -79,7 +80,6 @@ import time
 import argparse
 import logging
 import json
-import yaml
 
 from zipfile import ZipFile
 
@@ -149,16 +149,24 @@ def _fix_path(path):
 def _run_test_on_ftl(FLAGS):
   # Generate ftl cmd for each testapps
   ftl_cmd_list = []
-  if FLAGS.arg_groups:
-    for arg_group in FLAGS.arg_groups.split(";"):
-      ftl_cmd_list.append(_ftl_cmd_with_arg_group(arg_group))
-  else:
+  
+  if FLAGS.testapp_dir and FLAGS.test_type:
     testapps = _search_testapps(FLAGS.testapp_dir, FLAGS.test_type)
     if not testapps:
       logging.error("No testapps found.")
       exit(1)
     for app in testapps:
-      ftl_cmd_list.append(_ftl_cmd_with_flags(FLAGS, app))
+      cmd = _ftl_cmd_with_flags(FLAGS, app)
+      if FLAGS.arg_groups:
+        for arg_group in FLAGS.arg_groups.split(";"):
+          cmd_extended = cmd[:]
+          cmd_extended.append(arg_group)
+          ftl_cmd_list.append(cmd_extended)
+      else:
+        ftl_cmd_list.append(cmd)
+  elif FLAGS.arg_groups:
+    for arg_group in FLAGS.arg_groups.split(";"):
+      ftl_cmd_list.append(_ftl_cmd_with_arg_group(FLAGS, arg_group))
 
   # Run each ftl cmd in threads
   threads = []
@@ -237,21 +245,16 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
   tests_result.get('apps').append(test_summary)
 
 
-def _ftl_cmd_with_arg_group(arg_group):
-  """Returns the cmd with a YAML-formatted argument file."""
-  file_path, group_name = arg_group.split(":")
-  with open(file_path, "r") as stream:
-    try:
-      all_arg_groups = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-      logging.error(exc)
+def _ftl_cmd_with_arg_group(FLAGS, arg_group):
+  """Returns the cmd with a YAML-formatted argument file. Only support robo & instrumentation tests"""
+  cmd = TEST_ANDROID_CMD[:]
+  test_flags = [arg_group, "--type", FLAGS.test_type, "--timeout", FLAGS.timeout]
+  if FLAGS.test_devices:
+    for device in FLAGS.test_devices.split(";"):
+      test_flags.extend(["--device", device])
+  if FLAGS.additional_flags:
+    test_flags.extend(FLAGS.additional_flags.split())
 
-  test_type = all_arg_groups.get(group_name).get("type")
-  if test_type==ROBO or test_type==INSTRUMENTATION:
-    cmd = TEST_ANDROID_CMD[:]
-  else:
-    raise ValueError("Invalid test_type. Only robo & instrumentation tests support arg_group")
-  
   cmd.append(arg_group)
   return cmd
 

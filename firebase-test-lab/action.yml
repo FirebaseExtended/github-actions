@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,8 +68,6 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        pip install pyyaml # pyyaml is used to validate the YAML argument file.
-        
         test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_groups="${{ inputs.arg_groups }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --additional_flags="${{ inputs.additional_flags }}")
         
         # first character in test_result is the exit code (0 or 1); the rest are the JSON format test summary.

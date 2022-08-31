@@ -47,7 +47,7 @@ inputs:
     description: 'Max retries when test on FTL failed.'
     required: false
   validator:
-    description: 'Customized python script that validate one game-loop test result.'
+    description: 'Path of customized python script that validate one game-loop test result.'
     required: false
   project_id:
     description: 'Firebase Project ID.'

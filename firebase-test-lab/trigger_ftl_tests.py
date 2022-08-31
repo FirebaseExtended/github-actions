@@ -200,7 +200,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
     # https://firebase.google.com/docs/test-lab/android/command-line#script_exit_codes
     logging.info("Test done: %s\nReturned code: %s", ftl_cmd, result.returncode)
 
-    test_summary = _parse_test_summary(FLAGS, ftl_cmd, result)
+    test_summary = _parse_test_summary(FLAGS, ftl_cmd, result, attempt_num)
     tests_result.get('apps').append(test_summary)
 
     if _validate_results(FLAGS, test_summary):
@@ -209,7 +209,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
     attempt_num += 1
 
 
-def _parse_test_summary(FLAGS, ftl_cmd, result):
+def _parse_test_summary(FLAGS, ftl_cmd, result, attempt_num):
     result_log = result.stdout.read()
     logging.info("Test log: %s", result_log)
 
@@ -251,6 +251,7 @@ def _parse_test_summary(FLAGS, ftl_cmd, result):
       outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
     
     return {
+      "attempt": attempt_num,
       "cmd": ftl_cmd,
       "return_code": result.returncode,
       "testapp_path": testapp_path,

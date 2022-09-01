@@ -48,7 +48,7 @@ inputs:
     default: 1
     required: false
   validator:
-    description: 'Path of customized python script that validate one game-loop test result.'
+    description: '[Experimental] Path of customized python script that validate one game-loop test result.'
     required: false
   project_id:
     description: 'Firebase Project ID.'

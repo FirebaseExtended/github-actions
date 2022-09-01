@@ -140,7 +140,7 @@ Output usage:
 ```
 
 Test summary example:
-```json
+```
 {
   "project_id": ${project_id},
   "apps": [

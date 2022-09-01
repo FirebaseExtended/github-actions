@@ -107,7 +107,7 @@ jobs:
             test_type: ${{ test_type }}
     ```
 
-    Example of authenticating via `workload_identity_provider` and `service_account` (Workload Identity Federation). See [Setting up Workload Identity Federation](https://github.com/google-github-actions/auth#setup) for more information.
+    Example of authenticating via `workload_identity_provider` and `service_account` (Workload Identity Federation). See [Setting up Workload Identity Federation](https://github.com/google-github-actions/auth#setup) for more information. (Note: For interal Google Cloud projects, Workload Identity Federation cannot be used by default. Please use Overground to modify Org Policy first.)
     ```yml
     jobs:
     ftl_testing:

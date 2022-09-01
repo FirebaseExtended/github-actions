@@ -81,6 +81,7 @@ import time
 import argparse
 import logging
 import json
+import imp
 
 from zipfile import ZipFile
 
@@ -185,67 +186,99 @@ def _run_test_on_ftl(FLAGS):
 # This runs in a separate thread, so instead of returning values we store
 # them in test_result so they can be accessed from the main thread.
 def _ftl_run(FLAGS, ftl_cmd, tests_result):
-  logging.info("Testapp sent: %s", ftl_cmd)
-  result = subprocess.Popen(
-      args=ftl_cmd,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.STDOUT,
-      universal_newlines=True, 
-      shell=True)
-  result_log = result.stdout.read()
+  attempt_num = 1
+  while attempt_num <= FLAGS.max_attempts:
+    logging.info("Testapp sent to FTL: %s (attempt %s of %s)", ftl_cmd, attempt_num, FLAGS.max_attempts)
+    result = subprocess.Popen(
+        args=ftl_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True, 
+        shell=True)
+    while result.poll() is None:
+      time.sleep(1) # Process hasn't exited yet, let's wait some
+    # https://firebase.google.com/docs/test-lab/android/command-line#script_exit_codes
+    logging.info("Test done: %s\nReturned code: %s", ftl_cmd, result.returncode)
 
-  # Use Regex to filter the test information, Until we have better APIs.
-  # Generate test summary by using regex search ftl cmd logs
-  testapp_path = ""
-  testapp_path_search = re.search(r'Uploading \[(.*?)\] to Firebase Test Lab', result_log, re.MULTILINE | re.DOTALL)
-  if testapp_path_search:
-    testapp_path = testapp_path_search.group(1)
+    test_summary = _parse_test_summary(FLAGS, ftl_cmd, result, attempt_num)
+    tests_result.get('apps').append(test_summary)
 
-  ftl_link = ""
-  ftl_link_search = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
-  if ftl_link_search:
-    ftl_link = ftl_link_search.group(1)
- 
-  raw_result_link = ""
-  raw_result_link_search = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
-  if raw_result_link_search:
-    raw_result_link = raw_result_link_search.group(1)
+    if _validate_results(FLAGS, test_summary):
+      break
+
+    attempt_num += 1
+
+
+def _parse_test_summary(FLAGS, ftl_cmd, result, attempt_num):
+    """There is no better API avaliable. Thus, use Regex to parse test information, and generate test_summary for this testapp"""
+    result_log = result.stdout.read()
+    logging.info("Test log: %s", result_log)
+
+    # Use Regex to filter the test information, Until we have better APIs.
+    # Generate test summary by using regex search ftl cmd logs
+    testapp_path = ""
+    testapp_path_search = re.search(r'Uploading \[(.*?)\] to Firebase Test Lab', result_log, re.MULTILINE | re.DOTALL)
+    if testapp_path_search:
+      testapp_path = testapp_path_search.group(1)
+
+    ftl_link = ""
+    ftl_link_search = re.search(r'Test results will be streamed to \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
+    if ftl_link_search:
+      ftl_link = ftl_link_search.group(1)
   
-  outcome_device = []
-  # Test outcome pattern 1:
-  # ┌─────────┬──────────────────────────────┬─────────────────────┐
-  # │ OUTCOME │       TEST_AXIS_VALUE        │     TEST_DETAILS    │
-  # ├─────────┼──────────────────────────────┼─────────────────────┤
-  # │ Failed  │ iphone13pro-15.2-en-portrait │ 1 test cases failed │
-  # └─────────┴──────────────────────────────┴─────────────────────┘
-  outcome_device_search = re.findall(r'│(.*?)│(.*?)│(.*?)│', result_log, re.MULTILINE | re.DOTALL)
-  for o_d in outcome_device_search:
-    if 'OUTCOME' in o_d[0]: # skip the table title
-      continue
-    outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
-  # Test outcome pattern 2:
-  # OUTCOME: Passed
-  # TEST_AXIS_VALUE: redfin-30-en-portrait
-  # TEST_DETAILS: --
-  outcome_device_search = re.findall(r'OUTCOME:(.*?)\nTEST_AXIS_VALUE:(.*?)\nTEST_DETAILS:', result_log, re.MULTILINE | re.DOTALL)
-  for o_d in outcome_device_search:
-    outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
+    raw_result_link = ""
+    raw_result_link_search = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result_log, re.MULTILINE | re.DOTALL)
+    if raw_result_link_search:
+      raw_result_link = raw_result_link_search.group(1)
+    
+    outcome_device = []
+    # Test outcome pattern 1:
+    # ┌─────────┬──────────────────────────────┬─────────────────────┐
+    # │ OUTCOME │       TEST_AXIS_VALUE        │     TEST_DETAILS    │
+    # ├─────────┼──────────────────────────────┼─────────────────────┤
+    # │ Failed  │ iphone13pro-15.2-en-portrait │ 1 test cases failed │
+    # └─────────┴──────────────────────────────┴─────────────────────┘
+    outcome_device_search = re.findall(r'│(.*?)│(.*?)│(.*?)│', result_log, re.MULTILINE | re.DOTALL)
+    for o_d in outcome_device_search:
+      if 'OUTCOME' in o_d[0]: # skip the table title
+        continue
+      outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
+    # Test outcome pattern 2:
+    # OUTCOME: Passed
+    # TEST_AXIS_VALUE: redfin-30-en-portrait
+    # TEST_DETAILS: --
+    outcome_device_search = re.findall(r'OUTCOME:(.*?)\nTEST_AXIS_VALUE:(.*?)\nTEST_DETAILS:', result_log, re.MULTILINE | re.DOTALL)
+    for o_d in outcome_device_search:
+      outcome_device.append({"device_axis": o_d[1].strip(), "outcome": o_d[0].strip()})
+    
+    return {
+      "attempt": attempt_num,
+      "cmd": ftl_cmd,
+      "return_code": result.returncode,
+      "testapp_path": testapp_path,
+      "test_type": FLAGS.test_type,
+      "ftl_link": ftl_link,
+      "raw_result_link":  raw_result_link,
+      "devices": outcome_device
+    }
 
-  while result.poll() is None:
-    time.sleep(1) # Process hasn't exited yet, let's wait some
-  # https://firebase.google.com/docs/test-lab/android/command-line#script_exit_codes
-  logging.info("Test done: %s\nReturned code: %s\n%s", ftl_cmd, result.returncode, result_log)
+
+def _validate_results(FLAGS, test_summary):
+  """Returns True if all tests passed; False otherwise"""
+  if test_summary.get("return_code") != 0:
+    return False
   
-  test_summary =  {
-    "cmd": ftl_cmd,
-    "return_code": result.returncode,
-    "testapp_path": testapp_path,
-    "test_type": FLAGS.test_type,
-    "ftl_link": ftl_link,
-    "raw_result_link":  raw_result_link,
-    "devices": outcome_device
-  }
-  tests_result.get('apps').append(test_summary)
+  if FLAGS.test_type == GAMELOOP and FLAGS.validator:
+    try:
+      # [Experimental] This is for game-loop test only, which could validate test result for one app.
+      # Assume FLAGS.validator it the path of customized python script, and contains function "validate(test_summary)"".
+      module = os.path.splitext(FLAGS.validator)[0]
+      validator = imp.load_source(module, FLAGS.validator)
+      return validator.validate(test_summary)
+    except ImportError:
+      logging.error("ImportError with validator: %s", FLAGS.validator)
+
+  return True
 
 
 def _ftl_cmd_with_arg_group(FLAGS, arg_group):
@@ -296,8 +329,9 @@ def _ftl_cmd_with_flags(FLAGS, testapp_path):
 
 
 def _extract_instrumentation_test(zip_path): 
-  # Android instrumentation tests requires two apks.
+  # Android instrumentation tests requires two apks. 
   # https://firebase.google.com/docs/test-lab/android/command-line#running_your_instrumentation_tests
+  # Please make sure the test apk name contains string "test" and the app apk doesn't.
   with ZipFile(zip_path, 'r') as zipObj:
     output_dir = os.path.splitext(zip_path)[0]
     zipObj.extractall(output_dir)
@@ -328,19 +362,23 @@ def _exit_code(tests_result):
 def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='FTL Test trigger.')
   parser.add_argument('-p', '--project_id',
-    default=None, help='Firebase Project ID..')
+    default=None, help='Firebase Project ID.')
   parser.add_argument('-a', '--arg_groups', 
     default=None, help='Arguments in a YAML-formatted argument file.')
   parser.add_argument('-d', '--testapp_dir',
     default=None, help='Testapps (apks, ipas, zips) in this directory will be tested.')
   parser.add_argument('-t', '--test_type',
     default=None, help='Test type that Firebase Test Lab will run..')
-  parser.add_argument('-m', '--test_devices',
+  parser.add_argument('--test_devices',
     default=None, help='Model id and device version for desired device. If none, will use FTL default.')
-  parser.add_argument('-o', '--timeout', 
+  parser.add_argument('--timeout', 
     default="600s", help='Timeout for one ftl test.')
-  parser.add_argument('-f', '--additional_flags', 
+  parser.add_argument('--additional_flags', 
     default=None, help='Additional flags that may be used.')
+  parser.add_argument('--max_attempts', 
+    default=1, type=int, help='Max attempts when test on FTL failed.')
+  parser.add_argument('--validator', 
+    default=None, help='Customized python script that validate one test app result.')
   args = parser.parse_args()
   if not (args.arg_groups or (args.testapp_dir and args.test_type)):
     raise ValueError("Must specify --arg_groups or (--testapp_dir and --test_type)")

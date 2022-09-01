@@ -45,6 +45,7 @@ inputs:
     required: false
   max_attempts:
     description: 'Max retries when test on FTL failed.'
+    default: 1
     required: false
   validator:
     description: 'Path of customized python script that validate one game-loop test result.'

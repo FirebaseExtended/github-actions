@@ -1,6 +1,6 @@
 # `firebase-test-lab` GitHub Action
 
-This GitHub Action sends your apps to Firebase Test Lab, which lets you test your apps on a range of devices and configurations, and generate test summary as output.
+This GitHub Action leverages gcloud CLI ([Android](https://firebase.google.com/docs/test-lab/android/command-line), [iOS](https://firebase.google.com/docs/test-lab/ios/command-line)), which could send your apps to Firebase Test Lab and lets you test your apps on a range of devices and configurations at once. Once all tests finish running, this GitHub Action will generate a summary in the JSON format.
 
 ## Prerequisite
 
@@ -35,7 +35,8 @@ jobs:
 
 -   `testapp_dir`: Testapps under this dir that will be tested. For XCTest, make sure you [packaged your app](https://firebase.google.com/docs/test-lab/ios/run-xctest#package-app) first. [TODO: needs better design] For instrumentation tests, you also need to package the apks: make sure the test apk name contains string "test" and the app apk doesn't (e.g. app-debug-unaligned.apk & app-debug-test-unaligned.apk -> app.zip).
 
--   `arg_groups` [**robo** & **instrumentation** test only]: Arguments in a YAML-formatted argument file, separate by ";". If there are conflicts between `arg_groups` and other inputs, arguments in `arg_groups` will be overrided by other inputs.
+-   `arg_groups` [**robo** & **instrumentation** test only]: Arguments in a YAML-formatted argument file, separate by ";". If there are conflicts between `arg_groups` and other inputs, arguments in `arg_groups` will be overrided by other inputs. Run [gcloud topic arg-files](https://cloud.google.com/sdk/gcloud/reference/topic/arg-files) for more information about argument files.
+    
     Here are the contents of a YAML argument file which is stored in a file named demo_arg.yaml:
     ```yml
     unit-tests:
@@ -86,9 +87,12 @@ jobs:
 
 -   `timeout` [default: 600s]: The maximum duration you want your test to run. You can enter an integer to represent the duration in seconds, or an integer and enumeration to represent the duration as a longer unit of time. 
 
+-   `additional_flags`: Additional [gcloud firebase test](https://cloud.google.com/sdk/gcloud/reference/firebase/test) flags and values that may be used. e.g. `--xcode-version=11.3` for XCTest. 
+
 -   `max_attempts` [default: 1]: Max retry attempts when test on FTL failed. 
 
 -   (Optional) The following inputs are for installation and authenticating to Google Cloud. Firebase Test Lab GitHub Action leverages [google-github-actions/auth](https://github.com/google-github-actions/auth) and [google-github-actions/setup-gcloud](https://github.com/google-github-actions/setup-gcloud). 
+    
     Example of authenticating via `credentials_json` (Service Account Key JSON). See [Creating and managing Google Cloud Service Account Keys](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) for more information.
     ```yml
     jobs:

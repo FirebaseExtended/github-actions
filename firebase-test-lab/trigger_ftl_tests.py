@@ -210,6 +210,7 @@ def _ftl_run(FLAGS, ftl_cmd, tests_result):
 
 
 def _parse_test_summary(FLAGS, ftl_cmd, result, attempt_num):
+    """There is no better API avaliable. Thus, use Regex to parse test information, and generate test_summary for this testapp"""
     result_log = result.stdout.read()
     logging.info("Test log: %s", result_log)
 
@@ -263,11 +264,14 @@ def _parse_test_summary(FLAGS, ftl_cmd, result, attempt_num):
 
 
 def _validate_results(FLAGS, test_summary):
+  """Returns True if all tests passed; False otherwise"""
   if test_summary.get("return_code") != 0:
     return False
   
   if FLAGS.test_type == GAMELOOP and FLAGS.validator:
     try:
+      # [Experimental] This is for game-loop test only, which could validate test result for one app.
+      # Assume FLAGS.validator it the path of customized python script, and contains function "validate(test_summary)"".
       module = os.path.splitext(FLAGS.validator)[0]
       validator = imp.load_source(module, FLAGS.validator)
       return validator.validate(test_summary)
@@ -325,8 +329,9 @@ def _ftl_cmd_with_flags(FLAGS, testapp_path):
 
 
 def _extract_instrumentation_test(zip_path): 
-  # Android instrumentation tests requires two apks.
+  # Android instrumentation tests requires two apks. 
   # https://firebase.google.com/docs/test-lab/android/command-line#running_your_instrumentation_tests
+  # Please make sure the test apk name contains string "test" and the app apk doesn't.
   with ZipFile(zip_path, 'r') as zipObj:
     output_dir = os.path.splitext(zip_path)[0]
     zipObj.extractall(output_dir)

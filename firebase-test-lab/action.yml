@@ -79,7 +79,7 @@ runs:
         
         # first character in test_result is the exit code (0 or 1); the rest are the JSON format test summary.
         if [[ ! -z ${test_result} ]]; then
-          echo "::set-output name=test_summary::$(echo ${test_result:2})"
+          echo "test_summary=$(echo ${test_result:2})" >> $GITHUB_OUTPUT
           exit $(echo ${test_result:0:1})
         else
           exit 1

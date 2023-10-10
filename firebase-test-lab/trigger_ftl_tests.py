@@ -287,12 +287,8 @@ def _ftl_cmd_with_arg_group(FLAGS, arg_group):
   cmd = TEST_ANDROID_CMD[:]
   test_flags = [arg_group, "--type", FLAGS.test_type, "--timeout", FLAGS.timeout]
   if FLAGS.test_devices:
-    test_device_list = FLAGS.test_devices.split(";")
-    if FLAGS.test_device_selection == "random":
-      test_flags.extend(["--device", random.choice(test_device_list)])
-    else:  # FLAGS.test_device_list == "all"
-      for device in test_device_list:
-        test_flags.extend(["--device", device])
+    for device in FLAGS.test_devices.split(";"):
+      test_flags.extend(["--device", device])
   if FLAGS.additional_flags:
     test_flags.extend(FLAGS.additional_flags.split())
 

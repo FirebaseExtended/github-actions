@@ -284,14 +284,17 @@ def _validate_results(FLAGS, test_summary):
 def _ftl_cmd_with_arg_group(FLAGS, arg_group):
   """Returns the cmd with a YAML-formatted argument file. Only support robo & instrumentation tests"""
   cmd = TEST_ANDROID_CMD[:]
-  test_flags = [arg_group, "--type", FLAGS.test_type, "--timeout", FLAGS.timeout]
+  test_flags = [arg_group]
+  if FLAGS.test_type:
+    test_flags = test_flags + ["--type", FLAGS.test_type]
+  test_flags = test_flags + ["--timeout", FLAGS.timeout]
   if FLAGS.test_devices:
     for device in FLAGS.test_devices.split(";"):
       test_flags.extend(["--device", device])
   if FLAGS.additional_flags:
     test_flags.extend(FLAGS.additional_flags.split())
 
-  cmd.append(arg_group)
+  cmd.extend(test_flags)
   return cmd
 
 

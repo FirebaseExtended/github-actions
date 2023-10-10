@@ -85,7 +85,7 @@ jobs:
             test_devices: model=redfin,version=30;model=oriole,version=33
     ```
 
--   `test_device_selection` [default: `all`]: Whether to run the tests on all test_devices (separated by semicolons) or a random selection. Allowed values: [`all`, `random`].
+-   `test_device_selection` [default: `all`]: Whether to run the tests on _all_ `test_devices` (separated by semicolons), or one randomly selected device from the list. Allowed values: [`all`, `random`].
 
 -   `timeout` [default: 600s]: The maximum duration you want your test to run. You can enter an integer to represent the duration in seconds, or an integer and enumeration to represent the duration as a longer unit of time. 
 

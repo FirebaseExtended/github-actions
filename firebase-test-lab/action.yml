@@ -36,6 +36,10 @@ inputs:
   test_devices:
     description: 'Device model used for testing. Separate by ";".'
     required: false
+  test_device_selection:
+    description: 'Whether to run on all test devices or a single randomly-chosen device. (all | random)'
+    default: 'all'
+    required: false
   timeout:
     description: 'Timeout for one FTL test.'
     default: '600s'
@@ -75,7 +79,7 @@ runs:
     - id: ftl_test
       shell: bash
       run: |
-        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_groups="${{ inputs.arg_groups }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --additional_flags="${{ inputs.additional_flags }}" --max_attempts="${{ inputs.max_attempts }}" --validator="${{ inputs.validator }}")
+        test_result=$(python $GITHUB_ACTION_PATH/trigger_ftl_tests.py --arg_groups="${{ inputs.arg_groups }}" --testapp_dir="${{ inputs.testapp_dir }}" --test_type="${{ inputs.test_type }}" --timeout="${{ inputs.timeout }}" --test_devices="${{ inputs.test_devices }}" --test_device_selection="${{ inputs.test_device_selection }}" --additional_flags="${{ inputs.additional_flags }}" --max_attempts="${{ inputs.max_attempts }}" --validator="${{ inputs.validator }}")
         
         # first character in test_result is the exit code (0 or 1); the rest are the JSON format test summary.
         if [[ ! -z ${test_result} ]]; then

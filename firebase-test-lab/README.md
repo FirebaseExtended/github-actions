@@ -85,6 +85,8 @@ jobs:
             test_devices: model=redfin,version=30;model=oriole,version=33
     ```
 
+-   `test_device_selection` [default: `all`]: Whether to run the tests on all devices listed in `test_devices` (separated by semicolons), or on one randomly-selected device from the list. Allowed values: [`all`, `random`].
+
 -   `timeout` [default: 600s]: The maximum duration you want your test to run. You can enter an integer to represent the duration in seconds, or an integer and enumeration to represent the duration as a longer unit of time. 
 
 -   `additional_flags`: Additional [gcloud firebase test](https://cloud.google.com/sdk/gcloud/reference/firebase/test) flags and values that may be used. e.g. `--xcode-version=11.3` for XCTest. 

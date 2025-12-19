@@ -66,13 +66,13 @@ runs:
   using: 'composite'
   steps:
     # Setup GCould Env if account infomation was provided
-    - uses: 'google-github-actions/auth@v2'
+    - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
       if: (inputs.workload_identity_provider && inputs.service_account) || inputs.credentials_json
       with:
         credentials_json: '${{ inputs.credentials_json }}'
         workload_identity_provider: '${{ inputs.workload_identity_provider }}'
         service_account: '${{ inputs.service_account }}'
-    - uses: google-github-actions/setup-gcloud@v1
+    - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
       if: (inputs.workload_identity_provider && inputs.service_account) || inputs.credentials_json
       with:
         install_components: 'beta'

@@ -15,7 +15,7 @@
 
 r"""Tool for sending mobile testapps to Firebase Test Lab for testing.
 
-Requires Cloud SDK installed with gsutil. Can be checked as follows:
+Requires Cloud SDK installed with gcloud. Can be checked as follows:
   gcloud --version
 
 This tool will use the GCS storage bucket, thus must be authorized first.
@@ -89,10 +89,8 @@ from zipfile import ZipFile
 
 if platform.system() == 'Windows':
   GCLOUD = "gcloud.CMD"
-  GSUTIL = "gsutil.CMD"
 else:
   GCLOUD = "gcloud"
-  GSUTIL = "gsutil"
 
 # Test Types:
 XCTEST = "xctest"
